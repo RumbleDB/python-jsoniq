@@ -11,10 +11,7 @@ class SequenceOfItems:
         return [json.loads(l.serializeAsJSON()) for l in self._jsequence.getAsList()]
 
     def getAsJSONRDD(self):
-        rdd = self._jsequence.getAsStringRDD();
-        print("Strings:");
-        for s in rdd.take(10):
-            print(s);
+        rdd = self._jsequence.getAsPickledStringRDD();
         rdd = RDD(rdd, self._sparkcontext)
         return rdd.map(lambda l: json.loads(l))
 
