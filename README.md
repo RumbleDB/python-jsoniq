@@ -1,3 +1,7 @@
+# RumbleDB for Python
+
+by Abishek Ramdas and Ghislain Fourny
+
 This is the Python version of RumbleDB. It is currently only a prototype (alpha) and probably unstable. 
 
 Install with
