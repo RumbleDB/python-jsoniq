@@ -1,4 +1,5 @@
 from pyspark.sql import SparkSession
+from .sequence import SequenceOfItems
 
 class MetaRumbleSession(type):
     def __getattr__(cls, item):
@@ -60,7 +61,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
 
     def jsoniq(self, str):
         sequence = self._jrumblesession.runQuery(str);
-        return sequence;
+        return SequenceOfItems(sequence);
 
     def __getattr__(self, item):
         print(f"Accessing attribute: {item}")
