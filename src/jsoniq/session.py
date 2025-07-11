@@ -3,7 +3,6 @@ from .sequence import SequenceOfItems
 import importlib.resources as pkg_resources
 
 with pkg_resources.path("jsoniq.jars", "rumbledb-1.24.0.jar") as jar_path:
-    print("Found Rumble JAR at:", jar_path)
     jar_path_str = "file://" + str(jar_path)
 
 class MetaRumbleSession(type):
