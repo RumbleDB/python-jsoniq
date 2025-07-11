@@ -2,14 +2,37 @@
 
 by Abishek Ramdas and Ghislain Fourny
 
-This is the Python version of RumbleDB. It is currently only a prototype (alpha) and probably unstable. 
+This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Spark and DataFrames. JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
+
+The Python edition of RumbleDB is currently only a prototype (alpha) and probably unstable. 
+
+## High-level information
+
+A RumbleSession is a wrapper around a SparkSession that additionally makes sure the RumbleDB environment is in scope.
+
+JSONiq queries are invoked with rumble.jsoniq() in a way similar to the way Spark SQL queries are invoked with spark.sql().
+
+Any number of Python DataFrames can be attached to JSONiq variables used in the query. It will later also possible to read tables registered in the Hive metastore, similar to spark.sql(). Alternatively, the JSONiq query can also read many files of many different formats from many places (local drive, HTTP, S3, HDFS, ...) directly with simple builtin function calls (see [RumbleDB's documentation](https://rumble.readthedocs.io/en/latest/)).
+
+The resulting sequence of items can be retrieved as DataFrame, as an RDD, as a Python list, or with a streaming iteration over the items.
+
+The individual items can be processed using the RumbleDB [Item API](https://github.com/RumbleDB/rumble/blob/master/src/main/java/org/rumbledb/api/Item.java).
+
+Alternatively, it is possible to directly get an RDD of Python-friendly JSON values, or a Python list of JSON values, or a streaming iteration of JSON values. This is a convenience that makes it unnecessary to use the Item API, especially for a first-time user.
+
+The design goal is that it should be possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
+
+Any feedback or error reports are very welcome.
+
+## Installation
 
 Install with
 ```
 pip install jsoniq
 ```
 
-Sample code:
+## Sample code
+
 ```
 from jsoniq import RumbleSession
 
@@ -69,9 +92,8 @@ while(res.hasNext()):
     print(res.nextJSON());
 res.close();
 
-# There is still a problem to solve to make RDDs work across Python and Java
-#rdd = res.getAsJSONRDD();
-#print(rdd.count());
-#for str in rdd.take(10):
-#    print(str);
+# This gets an RDD of JSON values that can be processed by Python                                                                                                                    rdd = res.getAsJSONRDD();
+print(rdd.count());
+for str in rdd.take(10):
+    print(str);
 ```
