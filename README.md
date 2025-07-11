@@ -20,6 +20,8 @@ The individual items can be processed using the RumbleDB [Item API](https://gith
 
 Alternatively, it is possible to directly get an RDD of Python-friendly JSON values, or a Python list of JSON values, or a streaming iteration of JSON values. This is a convenience that makes it unnecessary to use the Item API, especially for a first-time user.
 
+The design goal is that it should be possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
+
 ## Installation
 
 Install with
