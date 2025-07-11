@@ -6,10 +6,10 @@ class SequenceOfItems:
         self._jsequence = sequence
 
     def getAsJSONList(self):
-        for s in self._jsequence.getAsList():
-            print(s.serialize());
-        return [json.loads(l.serialize()) for l in self._jsequence.getAsList()]
+        return [json.loads(l.serializeAsJSON()) for l in self._jsequence.getAsList()]
+
+    def nextJSON(self):
+        return self._jsequence.next().serializeAsJSON()
 
     def __getattr__(self, item):
-        print(f"Accessing attribute: {item}")
         return getattr(self._jsequence, item)
