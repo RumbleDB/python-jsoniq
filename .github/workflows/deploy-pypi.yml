@@ -1,4 +1,4 @@
-name: Publish RumbleDB Python 🐍 distribution 📦 to PyPI and TestPyPI
+name: Deploy to Pypi
 
 on: workflow_dispatch
 
