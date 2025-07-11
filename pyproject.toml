@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jsoniq"
+version = "1.23.0"
+description = "Python edition of RumbleDB, a JSONiq engine"
+requires-python = ">=3.11"
+dependencies = [
+]
+authors = [
+  {name = "Ghislain Fourny", email = "ghislain.fourny@inf.ethz.ch"},
+  {name = "Abishek Ramdas"},
+]
+readme = "README.md"
+license='Apache License 2.0'
+license-files = ["LICENSE*"]
+keywords = ["jsoniq", "spark", "apache-spark", "dataframe", "heterogeneous", "json", "query"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.11",
+]
+
+[project.urls]
+Homepage = "https://rumbledb.org"
+Documentation = "https://rumble.readthedocs.io/en/latest/"
+Repository = "https://github.com/RumbleDB/python-jsoniq.git"
+"Bug Tracker" = "https://github.com/RumbleDB/python-jsoniq/issues"
+
+[tool.black]
+line-length = 88
