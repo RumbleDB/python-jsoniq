@@ -14,8 +14,7 @@ authors = [
   {name = "Abishek Ramdas"},
 ]
 readme = "README.md"
-license = "Apache License 2.0"
-license-files = ["LICENSE*"]
+license = { file = "LICENSE" }
 keywords = ["jsoniq", "spark", "apache-spark", "dataframe", "heterogeneous", "json", "query"]
 classifiers = [
   "Development Status :: 3 - Alpha",
