@@ -92,7 +92,8 @@ while(res.hasNext()):
     print(res.nextJSON());
 res.close();
 
-# This gets an RDD of JSON values that can be processed by Python                                                                                                                    rdd = res.getAsJSONRDD();
+# This gets an RDD of JSON values that can be processed by Python
+rdd = res.getAsJSONRDD();
 print(rdd.count());
 for str in rdd.take(10):
     print(str);
