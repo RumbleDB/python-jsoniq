@@ -22,6 +22,12 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+jsoniq = ["jars/*.jar"]
+
 [project.urls]
 Homepage = "https://rumbledb.org"
 Documentation = "https://rumble.readthedocs.io/en/latest/"
