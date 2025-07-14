@@ -183,9 +183,9 @@ print(seq.json());
 # Last updates
 
 ## Version 0.1.0 alpha 8
-Ability to write back a sequence of items to local disk, HDFS, S3... in various formats (JSON, CSV, Parquet...).
-Automatically declare external variables bound as DataFrames to improve userfriendliness.
-Simplified the function names to make them more intuitive (json(), items(), df(), rdd(), etc).
+- Ability to write back a sequence of items to local disk, HDFS, S3... in various formats (JSON, CSV, Parquet...).
+- Automatically declare external variables bound as DataFrames to improve userfriendliness.
+- Simplified the function names to make them more intuitive (json(), items(), df(), rdd(), etc).
 
 ## Version 0.1.0 alpha 9
 Upgrade to Spark 4, which aligns the internal scala versions to 2.13 and should remove some errors. Requires Java 17 or 21.
