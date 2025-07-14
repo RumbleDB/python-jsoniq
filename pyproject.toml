@@ -8,7 +8,7 @@ version = "0.1.0a9"
 description = "Python edition of RumbleDB, a JSONiq engine"
 requires-python = ">=3.11"
 dependencies = [
-    "pyspark==4.0.0"
+    "pyspark==4.0"
 ]
 authors = [
   {name = "Ghislain Fourny", email = "ghislain.fourny@inf.ethz.ch"},
