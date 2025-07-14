@@ -121,7 +121,7 @@ for str in rdd.take(10):
     print(str);
 
 # It is also possible to write the output to a file locally or on a cluster. The API is similar to that of Spark dataframes.
-# Note that it creates a directory and stores the (potentially very large) output in a shared directory.
+# Note that it creates a directory and stores the (potentially very large) output in a sharded directory.
 # RumbleDB was already tested with up to 64 AWS machines and 100s of TBs of data.
 # Of course the examples below are so small that it makes more sense to process the results locally with Python,
 # but this shows how GBs or TBs of data obtained from JSONiq can be written back to disk.
@@ -131,4 +131,51 @@ seq.write().mode("overwrite").parquet("outputparquet");
 
 seq = rumble.jsoniq("1+1");
 seq.write().mode("overwrite").text("outputtext");
+
+# A more complex, standalone query
+
+seq = rumble.jsoniq("""
+
+let $stores :=
+[
+  { "store number" : 1, "state" : "MA" },
+  { "store number" : 2, "state" : "MA" },
+  { "store number" : 3, "state" : "CA" },
+  { "store number" : 4, "state" : "CA" }
+]
+let $sales := [
+   { "product" : "broiler", "store number" : 1, "quantity" : 20  },
+   { "product" : "toaster", "store number" : 2, "quantity" : 100 },
+   { "product" : "toaster", "store number" : 2, "quantity" : 50 },
+   { "product" : "toaster", "store number" : 3, "quantity" : 50 },
+   { "product" : "blender", "store number" : 3, "quantity" : 100 },
+   { "product" : "blender", "store number" : 3, "quantity" : 150 },
+   { "product" : "socks", "store number" : 1, "quantity" : 500 },
+   { "product" : "socks", "store number" : 2, "quantity" : 10 },
+   { "product" : "shirt", "store number" : 3, "quantity" : 10 }
+]
+let $join :=
+  for $store in $stores[], $sale in $sales[]
+  where $store."store number" = $sale."store number"
+  return {
+    "nb" : $store."store number",
+    "state" : $store.state,
+    "sold" : $sale.product
+  }
+return [$join]
+""");
+
+print(seq.json());
+
+seq = rumble.jsoniq("""
+for $product in json-lines("http://rumbledb.org/samples/products-small.json", 10)
+group by $store-number := $product.store-number
+order by $store-number ascending
+return {
+    "store" : $store-number,
+    "products" : [ distinct-values($product.product) ]
+}
+""");
+print(seq.json());
+
 ```
