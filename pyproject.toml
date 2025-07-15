@@ -37,3 +37,8 @@ Repository = "https://github.com/RumbleDB/python-jsoniq.git"
 
 [tool.black]
 line-length = 88
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
