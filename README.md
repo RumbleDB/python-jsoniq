@@ -45,6 +45,8 @@ Install with
 pip install jsoniq
 ```
 
+*Important note*: since the jsoniq package depends on pyspark 4, Java 17 or Java 21 is a requirement. If another version of Java is installed, this may lead to an error message such as "Unsupported class file major version 61". If so, you will need to check that JAVA_HOME is properly set.
+
 ## Sample code
 
 We will make more documentation available as we go. In the meantime, you will find a sample code below that should just run
