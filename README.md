@@ -45,7 +45,7 @@ Install with
 pip install jsoniq
 ```
 
-*Important note*: since the jsoniq package depends on pyspark 4, Java 17 or Java 21 is a requirement. If another version of Java is installed, this may lead to an error message such as "Unsupported class file major version 61". If so, you will need to check that JAVA_HOME is properly set.
+*Important note*: since the jsoniq package depends on pyspark 4, Java 17 or Java 21 is a requirement. If another version of Java is installed, the execution of a Python program attempting to create a RumbleSession will lead to an error message on stderr that contains explanations.
 
 ## Sample code
 
@@ -184,10 +184,14 @@ print(seq.json());
 
 # Last updates
 
+## Version 0.1.0 alpha 10
+- Add an explicit explanation on stderr if the Java version is not properly set, together with hints.
+
+## Version 0.1.0 alpha 9
+- Upgrade to Spark 4, which aligns the internal scala versions to 2.13 and should remove some errors. Requires Java 17 or 21.
+
 ## Version 0.1.0 alpha 8
 - Ability to write back a sequence of items to local disk, HDFS, S3... in various formats (JSON, CSV, Parquet...).
 - Automatically declare external variables bound as DataFrames to improve userfriendliness.
 - Simplified the function names to make them more intuitive (json(), items(), df(), rdd(), etc).
 
-## Version 0.1.0 alpha 9
-Upgrade to Spark 4, which aligns the internal scala versions to 2.13 and should remove some errors. Requires Java 17 or 21.
