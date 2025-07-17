@@ -88,7 +88,10 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         if not name.startswith("$"):
             raise ValueError("Variable name must start with a dollar symbol ('$').")
         name = name[1:]
-        conf.setExternalVariableValue(name, df._jdf);
+        if(hasattr(df, "_get_object_id")):
+            conf.setExternalVariableValue(name, df);
+        else:
+            conf.setExternalVariableValue(name, df._jdf);
         return self;
 
     def jsoniq(self, str):
