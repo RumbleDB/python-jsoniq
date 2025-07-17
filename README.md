@@ -225,6 +225,9 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Last updates
 
+## Version 0.1.0 alpha 11
+- Fix an issue when feeding a DataFrame output by rumble.jsoniq() back to a new JSONiq query (as a variable).
+
 ## Version 0.1.0 alpha 10
 - Add an explicit explanation on stderr if the Java version is not properly set, together with hints.
 
