@@ -52,6 +52,8 @@ pip install jsoniq
 We will make more documentation available as we go. In the meantime, you will find a sample code below that should just run
 after installing the library.
 
+You can directly copy paste the code below to a Python file and execute it with Python.
+
 ```
 from jsoniq import RumbleSession
 
@@ -83,13 +85,41 @@ modes = res.availableOutputs();
 for mode in modes:
     print(mode)
 
-###### Parallel access ######
+#########################################################
+###### Manipulating DataFrames with SQL and JSONiq ######
+#########################################################
 
-# This returns a regular data frame that can be further processed with spark.sql() or rumble.jsoniq().
+# If the output of the JSONiq query is structured (i.e., RumbleDB was able to detect a schema),
+# then we can extract a regular data frame that can be further processed with spark.sql() or rumble.jsoniq().
 df = res.df();
 df.show();
 
+# We are continuously working on the detection of schemas and RumbleDB will get better at it with them.
+# JSONiq is a very powerful language and can also produce heterogeneous output "by design". Then you need
+# to use rdd() instead of df(), or to collect the list of JSON values (see further down). Remember
+# that availableOutputs() tells you what is at your disposal.
+
+# A DataFrame output by JSONiq can be reused as input to a Spark SQL query.
+# (Remember that rumble is a wrapper around a SparkSession object, so you can use rumble.sql() just like spark.sql())
+df.createTempView("input")
+df2 = rumble.sql("SELECT * FROM input").toDF("name");
+df2.show();
+
+# A DataFrame output by Spark SQL can be reused as input to a JSONiq query.
+rumble.bindDataFrameAsVariable('$b', df2);
+seq2 = rumble.jsoniq("for $i in 1 to 5 return $b");
+df3 = seq2.df();
+df3.show();
+
+# And a DataFrame output by JSONiq can be reused as input to another JSONiq query.
+rumble.bindDataFrameAsVariable('$b', df3);
+seq3 = rumble.jsoniq("$b[position() lt 3]");
+df4 = seq3.df();
+df4.show();
+
+#########################
 ##### Local access ######
+#########################
 
 # This materializes the rows as items.
 # The items are accessed with the RumbleDB Item API.
@@ -103,7 +133,9 @@ while (res.hasNext()):
     print(res.next().getStringValue());
 res.close();
 
+################################################################################################################
 ###### Native Python/JSON Access for bypassing the Item API (but losing on the richer JSONiq type system) ######
+################################################################################################################
 
 # This method directly gets the result as JSON (dict, list, strings, ints, etc).
 jlist = res.json();
@@ -122,6 +154,10 @@ print(rdd.count());
 for str in rdd.take(10):
     print(str);
 
+###################################################
+###### Write back to the disk (or data lake) ######
+###################################################
+
 # It is also possible to write the output to a file locally or on a cluster. The API is similar to that of Spark dataframes.
 # Note that it creates a directory and stores the (potentially very large) output in a sharded directory.
 # RumbleDB was already tested with up to 64 AWS machines and 100s of TBs of data.
@@ -134,7 +170,9 @@ seq.write().mode("overwrite").parquet("outputparquet");
 seq = rumble.jsoniq("1+1");
 seq.write().mode("overwrite").text("outputtext");
 
-# A more complex, standalone query
+############################################
+##### More complex, standalone queries #####
+############################################
 
 seq = rumble.jsoniq("""
 
@@ -181,6 +219,9 @@ return {
 print(seq.json());
 
 ```
+# How to learn JSONiq, and more query examples
+
+Even more queries can be found [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) and you can look at the [JSONiq documentation](https://www.jsoniq.org) and tutorials.
 
 # Last updates
 
