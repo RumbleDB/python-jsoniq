@@ -2,9 +2,13 @@
 
 by Abishek Ramdas and Ghislain Fourny
 
-This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Spark and DataFrames. JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
+This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Python.
 
-The Python edition of RumbleDB is currently only a prototype (alpha) and probably unstable. We welcome bug reports.
+JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
+
+Spark aficionados can also pass DataFrames to JSONiq queries and take back DataFrames. This gives them an environment in which both Spark SQL and JSONiq co-exist to manipulate the data. 
+
+The Python edition of RumbleDB is currently a prototype (alpha) and probably unstable. We welcome bug reports and feedback.
 
 ## About RumbleDB
 
@@ -24,19 +28,32 @@ A RumbleSession is a wrapper around a SparkSession that additionally makes sure 
 
 JSONiq queries are invoked with rumble.jsoniq() in a way similar to the way Spark SQL queries are invoked with spark.sql().
 
-Any number of Python DataFrames can be attached to external JSONiq variables used in the query. It will later also be possible to read tables registered in the Hive metastore, similar to spark.sql(). Alternatively, the JSONiq query can also read many files of many different formats from many places (local drive, HTTP, S3, HDFS, ...) directly with simple builtin function calls such as json-lines(), text-file(), parquet-file(), csv-file(), etc. See [RumbleDB's documentation](https://rumble.readthedocs.io/en/latest/).
+JSONiq variables can be bound to lists of JSON values (str, int, float, True, False, None, dict, list) or to Pyspark DataFrames. A JSONiq query can use as many variables as needed (for example, it can join between different collections).
 
-The resulting sequence of items can be retrieved as DataFrame, as an RDD, as a Python list, or with a streaming iteration over the items.
+It will later also be possible to read tables registered in the Hive metastore, similar to spark.sql(). Alternatively, the JSONiq query can also read many files of many different formats from many places (local drive, HTTP, S3, HDFS, ...) directly with simple builtin function calls such as json-lines(), text-file(), parquet-file(), csv-file(), etc. See [RumbleDB's documentation](https://rumble.readthedocs.io/en/latest/).
 
-The individual items can be processed using the RumbleDB [Item API](https://github.com/RumbleDB/rumble/blob/master/src/main/java/org/rumbledb/api/Item.java).
+The resulting sequence of items can be retrieved as a list of JSON values, as a Pyspark DataFrame, or, for advanced users, as an RDD or with a streaming iteration over the items using the [RumbleDB Item API](https://github.com/RumbleDB/rumble/blob/master/src/main/java/org/rumbledb/api/Item.java).
 
-Alternatively, it is possible to directly get a Python list of JSON values, or a streaming iteration of JSON values. This is a convenience that makes it unnecessary to use the Item API, especially for a first-time user.
+It is also possible to write the sequence of items to the local disk, to HDFS, to S3, etc in a way similar to how DataFrames are written back by Pyspark.
 
-It is also possible to write the sequence of items to the local disk, to HDFS, to S3, etc in a way similar to how DataFrames are written back by Spark.
-
-The design goal is that it should be possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
+The design goal is that it is possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
 
 Any feedback or error reports are very welcome.
+
+## Type mapping
+
+When passing Python values to JSONiq or getting them from a JSONiq queries, the mapping is as follows: 
+
+| Python | JSONiq |
+|-------|-------|
+|dict|object|
+|list|array|
+|str|string|
+|int|integer|
+|bool|boolean|
+|None|null|
+
+Furthermore, other JSONiq types will be mapped to string literals. Users who want to preserve JSONiq types can use the Item API instead.
 
 ## Installation
 
@@ -49,7 +66,7 @@ pip install jsoniq
 
 ## Sample code
 
-We will make more documentation available as we go. In the meantime, you will find a sample code below that should just run
+We will make more documentation available as we go. In the meantime, you will find a sample, commented code below that should just run
 after installing the library.
 
 You can directly copy paste the code below to a Python file and execute it with Python.
@@ -60,9 +77,11 @@ from jsoniq import RumbleSession
 # The syntax to start a session is similar to that of Spark.
 # A RumbleSession is a SparkSession that additionally knows about RumbleDB.
 # All attributes and methods of SparkSession are also available on RumbleSession. 
+
 rumble = RumbleSession.builder.getOrCreate();
 
 # Just to improve readability when invoking Spark methods
+# (such as spark.sql() or spark.createDataFrame()).
 spark = rumble
 
 ##############################
@@ -75,10 +94,11 @@ spark = rumble
 # of items, here the sequence with just the integer item 2.
 items = rumble.jsoniq('1+1')
 
-# A sequence of items can simply be converted to a list of Python values with json().
-# Since there is only one value in the sequence output by this query, we get a singleton list with the integer 2.
+# A sequence of items can simply be converted to a list of Python/JSON values with json().
+# Since there is only one value in the sequence output by this query,
+# we get a singleton list with the integer 2.
+# Generally though, the results may contain zero, one, two, or more items.
 python_list = items.json()
-
 print(python_list)
 
 ############################################
@@ -141,7 +161,7 @@ print(seq.json());
 # queries are sequence of items.
 # A Python list will be seamlessly converted to a sequence of items by the library.
 # Currently we only support strs, ints, floats, booleans, None, lists, and dicts.
-# But if you need more (like date, bytes, etc) we can add them without any problem.
+# But if you need more (like date, bytes, etc) we will add them without any problem.
 # JSONiq has a rich type system.
  
 rumble.bind('$c', [1,2,3,4, 5, 6])
