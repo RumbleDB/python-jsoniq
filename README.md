@@ -328,6 +328,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 - Allow to bind JSONiq variables to Python values (mapping Python lists to sequences of items). This makes it possible to manipulate Python values directly with JSONiq and even without any knowledge of Spark at all.
 - renamed bindDataFrameAsVariable() to bind(), which can be used both with DataFrames and Python lists.
 - add bindOne() for binding a single value to a JSONiq variable.
+- wrapping df() in a Pyspark DataFrame to make sure it can be used with pyspark DataFrame transformations.
 
 ## Version 0.1.0 alpha 11
 - Fix an issue when feeding a DataFrame output by rumble.jsoniq() back to a new JSONiq query (as a variable).
