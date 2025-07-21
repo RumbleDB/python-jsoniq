@@ -83,50 +83,6 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
 
     _builder = Builder()
 
-    def convert(self, value):
-        if isinstance(value, bool):
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createBooleanItem(value)
-        elif isinstance(value, str):
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createStringItem(value)
-        elif isinstance(value, int):
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createLongItem(value)
-        elif isinstance(value, float):
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createDoubleItem(value)
-        elif value is None:
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createNullItem()
-        elif isinstance(value, list):
-            java_list = self._sparksession._jvm.java.util.ArrayList()
-            for v in value:
-                java_list.add(self.convert(v))
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createArrayItem(java_list, False)
-        elif isinstance(value, dict):
-            java_map = self._sparksession._jvm.java.util.HashMap()
-            for k, v in value.items():
-                java_list = self._sparksession._jvm.java.util.ArrayList()
-                java_list.add(self.convert(v))
-                java_map[k] = java_list
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createObjectItem(java_map, False)
-        else:
-            raise ValueError("Cannot yet convert value of type " + str(type(value)) + " to a RumbleDB item. Please open an issue and we will look into it!")
-
-    def bind(self, name: str, valueToBind):
-        conf = self._jrumblesession.getConfiguration();
-        if not name.startswith("$"):
-            raise ValueError("Variable name must start with a dollar symbol ('$').")
-        name = name[1:]
-        if isinstance(valueToBind, list):
-            items = [ self.convert(value) for value in valueToBind]
-            conf.setExternalVariableValue(name, items)
-            return self
-        if(hasattr(valueToBind, "_get_object_id")):
-            conf.setExternalVariableValue(name, valueToBind);
-        else:
-            conf.setExternalVariableValue(name, valueToBind._jdf);
-        return self;
-
-    def bindOne(self, name: str, value):
-        return self.bind(name, [value])
-
     def bindDataFrameAsVariable(self, name: str, df):
         conf = self._jrumblesession.getConfiguration();
         if not name.startswith("$"):

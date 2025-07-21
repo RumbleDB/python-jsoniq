@@ -60,18 +60,15 @@ from jsoniq import RumbleSession
 # The syntax to start a session is similar to that of Spark.
 # A RumbleSession is a SparkSession that additionally knows about RumbleDB.
 # All attributes and methods of SparkSession are also available on RumbleSession. 
-rumble = RumbleSession.builder.getOrCreate();
-
-# Just to improve readability when invoking Spark methods
-spark = rumble
+rumble = RumbleSession.builder.appName("PyRumbleExample").getOrCreate();
 
 # Create a data frame also similar to Spark (but using the rumble object).
 data = [("Alice", 30), ("Bob", 25), ("Charlie", 35)];
 columns = ["Name", "Age"];
-df = spark.createDataFrame(data, columns);
+df = rumble.createDataFrame(data, columns);
 
 # This is how to bind a JSONiq variable to a dataframe. You can bind as many variables as you want.
-rumble.bind('$a', df);
+rumble.bindDataFrameAsVariable('$a', df);
 
 # This is how to run a query. This is similar to spark.sql().
 # Since variable $a was bound to a DataFrame, it is automatically declared as an external variable
@@ -105,17 +102,17 @@ df.show();
 # A DataFrame output by JSONiq can be reused as input to a Spark SQL query.
 # (Remember that rumble is a wrapper around a SparkSession object, so you can use rumble.sql() just like spark.sql())
 df.createTempView("input")
-df2 = spark.sql("SELECT * FROM input").toDF("name");
+df2 = rumble.sql("SELECT * FROM input").toDF("name");
 df2.show();
 
 # A DataFrame output by Spark SQL can be reused as input to a JSONiq query.
-rumble.bind('$b', df2);
+rumble.bindDataFrameAsVariable('$b', df2);
 seq2 = rumble.jsoniq("for $i in 1 to 5 return $b");
 df3 = seq2.df();
 df3.show();
 
 # And a DataFrame output by JSONiq can be reused as input to another JSONiq query.
-rumble.bind('$b', df3);
+rumble.bindDataFrameAsVariable('$b', df3);
 seq3 = rumble.jsoniq("$b[position() lt 3]");
 df4 = seq3.df();
 df4.show();
@@ -221,58 +218,12 @@ return {
 """);
 print(seq.json());
 
-############################################################
-###### Binding JSONiq variables to Python values ###########
-############################################################
-
-# It is possible to bind a variable to a list of native Python values.
-# Remember that in JSONiq, variables are bound to sequences of items.
-# A Python list will be seamlessly converted to a sequence of items by the library.
-# Currently we only support strs, ints, floats, booleans, None, lists, and dicts.
-rumble.bind('$c', [1,2,3,4, 5, 6])
-print(rumble.jsoniq("""
-for $v in $c
-let $parity := $v mod 2
-group by $parity
-return { switch($parity)
-         case 0 return "even"
-         case 1 return "odd"
-         default return "?" : $v
-}
-""").json())
-
-rumble.bind('$c', [[1,2,3],[4,5,6]])
-print(rumble.jsoniq("""
-for $i in $c
-return [
-  for $j in $i
-  return { "foo" : $j }
-]
-""").json())
-
-rumble.bind('$c', [{"foo":[1,2,3]},{"foo":[4,{"bar":[1,False, None]},6]}])
-print(rumble.jsoniq('{ "results" : $c.foo[[2]] }').json())
-
-# It is possible to bind only one value. The it must be provided as a singleton list.
-# This is because in JSONiq, an item is the same a sequence of one item.
-rumble.bind('$c', [42])
-print(rumble.jsoniq('for $i in 1 to $c return $i*$i').json())
-
-# For convenience and code readability, you can also use bindOne().
-rumble.bindOne('$c', 42)
-print(rumble.jsoniq('for $i in 1 to $c return $i*$i').json())
-
 ```
 # How to learn JSONiq, and more query examples
 
 Even more queries can be found [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) and you can look at the [JSONiq documentation](https://www.jsoniq.org) and tutorials.
 
 # Last updates
-
-## Version 0.1.0 alpha 12
-- Allow to bind JSONiq variables to Python values (mapping Python lists to sequences of items). This makes it possible to manipulate Python values directly with JSONiq and even without any knowledge of Spark at all.
-- renamed bindDataFrameAsVariable() to bind(), which can be used both with DataFrames and Python lists.
-- add bindOne() for binding a single value to a JSONiq variable.
 
 ## Version 0.1.0 alpha 11
 - Fix an issue when feeding a DataFrame output by rumble.jsoniq() back to a new JSONiq query (as a variable).
