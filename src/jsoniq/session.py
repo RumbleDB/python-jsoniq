@@ -132,7 +132,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         elif isinstance(valueToBind, tuple):
             conf.setExternalVariableValue(name, self.convert(valueToBind))
         elif isinstance(valueToBind, list):
-            raise ValueError("To avoid confusion, a sequence of items must be provided as a Python tuple, not as a Python list. Lists are mapped to single array items, while tuples are mapped to sequences of items. If you want to bind the variable to one array item, then you need to wrap the provided list inside a singleton tuple and try again, or you can also call bindOne() instead.")
+            raise ValueError("To avoid confusion, a sequence of items must be provided as a Python tuple, not as a Python list. Lists are mapped to single array items, while tuples are mapped to sequences of items. If you want to interpret the list as a sequence of items (one item for each list member), then you need to change this list to a tuple by wrapping it into a tuple() call. If you want to bind the variable to one array item, then you need to wrap the provided list inside a singleton tuple and try again, or you can also call bindOne() instead.")
         elif(hasattr(valueToBind, "_get_object_id")):
             conf.setExternalVariableValue(name, valueToBind);
         else:
