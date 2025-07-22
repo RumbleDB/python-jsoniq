@@ -347,7 +347,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Last updates
 
-## Version 0.1.0 alpha 13
+## Version 0.2.0 alpha 1
 - Allow to bind JSONiq variables to pandas dataframes
 - Allow to retrieve the output of a JSONiq query as a pandas dataframe (if the output is available as a dataframe, i.e., availableOutputs() returns a list that contains "DataFrame")
 - Clean up the mapping to strictly map tuples to sequence of items, and lists ot array items. This will avoid confusion between arrays and sequences.
