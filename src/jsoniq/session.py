@@ -4,6 +4,7 @@ import sys
 import platform
 import os
 import re
+import pandas as pd
 import importlib.resources as pkg_resources
 
 with pkg_resources.path("jsoniq.jars", "rumbledb-1.24.0.jar") as jar_path:
@@ -84,6 +85,8 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
     _builder = Builder()
 
     def convert(self, value):
+        if isinstance(value, tuple):
+            return [ self.convert(v) for v in value]
         if isinstance(value, bool):
             return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createBooleanItem(value)
         elif isinstance(value, str):
@@ -114,18 +117,30 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         if not name.startswith("$"):
             raise ValueError("Variable name must start with a dollar symbol ('$').")
         name = name[1:]
-        if isinstance(valueToBind, list):
-            items = [ self.convert(value) for value in valueToBind]
-            conf.setExternalVariableValue(name, items)
-            return self
-        if(hasattr(valueToBind, "_get_object_id")):
+        if isinstance(valueToBind, SequenceOfItems):
+            outputs = valueToBind.availableOutputs()
+            if isinstance(outputs, list) and "DataFrame" in outputs:
+                conf.setExternalVariableValue(name, valueToBind.df());
+            # TODO support binding a variable to an RDD
+            #elif isinstance(outputs, list) and "RDD" in outputs:
+            #    conf.setExternalVariableValue(name, valueToBind.getAsRDD());
+            else:
+                conf.setExternalVariableValue(name, valueToBind.items());
+        elif isinstance(valueToBind, pd.DataFrame):
+            pysparkdf = self._sparksession.createDataFrame(valueToBind)
+            conf.setExternalVariableValue(name, pysparkdf._jdf);
+        elif isinstance(valueToBind, tuple):
+            conf.setExternalVariableValue(name, self.convert(valueToBind))
+        elif isinstance(valueToBind, list):
+            raise ValueError("To avoid confusion, a sequence of items must be provided as a Python tuple, not as a Python list. Lists are mapped to single array items, while tuples are mapped to sequences of items. If you want to bind the variable to one array item, then you need to wrap the provided list inside a singleton tuple and try again, or you can also call bindOne() instead.")
+        elif(hasattr(valueToBind, "_get_object_id")):
             conf.setExternalVariableValue(name, valueToBind);
         else:
             conf.setExternalVariableValue(name, valueToBind._jdf);
         return self;
 
     def bindOne(self, name: str, value):
-        return self.bind(name, [value])
+        return self.bind(name, (value,))
 
     def bindDataFrameAsVariable(self, name: str, df):
         conf = self._jrumblesession.getConfiguration();

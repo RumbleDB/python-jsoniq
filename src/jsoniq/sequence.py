@@ -10,7 +10,7 @@ class SequenceOfItems:
         self._sparksession = sparksession
 
     def json(self):
-        return [json.loads(l.serializeAsJSON()) for l in self._jsequence.items()]
+        return tuple([json.loads(l.serializeAsJSON()) for l in self._jsequence.items()])
 
     def rdd(self):
         rdd = self._jsequence.getAsPickledStringRDD();
@@ -19,6 +19,9 @@ class SequenceOfItems:
 
     def df(self):
         return DataFrame(self._jsequence.getAsDataFrame(), self._sparksession)
+
+    def pdf(self):
+        return self.df().toPandas()
 
     def nextJSON(self):
         return self._jsequence.next().serializeAsJSON()
