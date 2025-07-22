@@ -42,7 +42,10 @@ Any feedback or error reports are very welcome.
 
 ## Type mapping
 
-When passing Python values to JSONiq or getting them from a JSONiq queries, the mapping is as follows: 
+Any expression in JSONiq returns a sequence of items. Any variable in JSONiq is bound to a sequence of items.
+Items can be objects, arrays, or atomic values (strings, integers, booleans, nulls, dates, binary, durations, doubles, decimal numbers, etc).
+
+When passing Python values to JSONiq or getting them from a JSONiq queries, the mapping to and from Python is as follows: 
 
 | Python | JSONiq |
 |-------|-------|
