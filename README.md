@@ -346,6 +346,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 - Allow to bind JSONiq variables to pandas dataframes
 - Allow to retrieve the output of a JSONiq query as a pandas dataframes (if the output is available as a dataframe, i.e., availableOutputs() returns a list that contains "DataFrame")
 - Clean up the mapping to strictly map tuples to sequence of items, and lists ot array items. This will avoid confusion between arrays and sequences.
+- As a consequence, json() now returns a tuple, not a list.
 
 ## Version 0.1.0 alpha 12
 - Allow to bind JSONiq variables to Python values (mapping Python lists to sequences of items). This makes it possible to manipulate Python values directly with JSONiq and even without any knowledge of Spark at all.
