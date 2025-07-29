@@ -20,6 +20,7 @@ class MetaRumbleSession(type):
 class RumbleSession(object, metaclass=MetaRumbleSession):
     def __init__(self, spark_session: SparkSession):
         self._sparksession = spark_session
+        self._sparksession.addArtifact(jar_path_str)
         self._jrumblesession = spark_session._jvm.org.rumbledb.api.Rumble(spark_session._jsparkSession)
 
     class Builder:
@@ -60,8 +61,18 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             self._sparkbuilder = SparkSession.builder.config("spark.jars", jar_path_str)
 
         def getOrCreate(self):
-            return RumbleSession(self._sparkbuilder.getOrCreate())
+            if RumbleSession._rumbleSession is None:
+                RumbleSession._rumbleSession = RumbleSession(self._sparkbuilder.getOrCreate())
+            return RumbleSession._rumbleSession
         
+        def create(self):
+            RumbleSession._rumbleSession = RumbleSession(self._sparkbuilder.create())
+            return RumbleSession._rumbleSession
+
+        def remote(self, spark_url):
+            self._sparkbuilder = self._sparkbuilder.remote(spark_url)
+            return self
+
         def appName(self, name):
             self._sparkbuilder = self._sparkbuilder.appName(name);
             return self;
@@ -83,6 +94,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             return res;
 
     _builder = Builder()
+    _rumbleSession = None
 
     def convert(self, value):
         if isinstance(value, tuple):

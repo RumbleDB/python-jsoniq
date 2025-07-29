@@ -1,6 +1,6 @@
 from IPython.core.magic import Magics, cell_magic, magics_class
 import time, json
-from .session import RumbleSession
+from jsoniq.session import RumbleSession
 from py4j.protocol import Py4JJavaError
 
 @magics_class
