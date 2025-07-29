@@ -20,7 +20,6 @@ class MetaRumbleSession(type):
 class RumbleSession(object, metaclass=MetaRumbleSession):
     def __init__(self, spark_session: SparkSession):
         self._sparksession = spark_session
-        self._sparksession.addArtifact(jar_path_str)
         self._jrumblesession = spark_session._jvm.org.rumbledb.api.Rumble(spark_session._jsparkSession)
 
     class Builder:
