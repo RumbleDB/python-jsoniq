@@ -22,6 +22,9 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         self._sparksession = spark_session
         self._jrumblesession = spark_session._jvm.org.rumbledb.api.Rumble(spark_session._jsparkSession)
 
+    def getRumbleConf(self):
+        return self._jrumblesession.getConfiguration()
+
     class Builder:
         def __init__(self):
 
@@ -60,8 +63,18 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             self._sparkbuilder = SparkSession.builder.config("spark.jars", jar_path_str)
 
         def getOrCreate(self):
-            return RumbleSession(self._sparkbuilder.getOrCreate())
+            if RumbleSession._rumbleSession is None:
+                RumbleSession._rumbleSession = RumbleSession(self._sparkbuilder.getOrCreate())
+            return RumbleSession._rumbleSession
         
+        def create(self):
+            RumbleSession._rumbleSession = RumbleSession(self._sparkbuilder.create())
+            return RumbleSession._rumbleSession
+
+        def remote(self, spark_url):
+            self._sparkbuilder = self._sparkbuilder.remote(spark_url)
+            return self
+
         def appName(self, name):
             self._sparkbuilder = self._sparkbuilder.appName(name);
             return self;
@@ -83,6 +96,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             return res;
 
     _builder = Builder()
+    _rumbleSession = None
 
     def convert(self, value):
         if isinstance(value, tuple):
@@ -155,7 +169,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
 
     def jsoniq(self, str):
         sequence = self._jrumblesession.runQuery(str);
-        return SequenceOfItems(sequence, self._sparksession);
+        return SequenceOfItems(sequence, self);
 
     def __getattr__(self, item):
         return getattr(self._sparksession, item)
