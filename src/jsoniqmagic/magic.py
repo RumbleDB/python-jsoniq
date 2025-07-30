@@ -35,10 +35,11 @@ class JSONiqMagic(Magics):
         if ("DataFrame" in response.availableOutputs()):
             print(response.pdf())
         elif ("Local" in response.availableOutputs()):
-            count = response.getAsRDD().count()
-            if count > 200:
-                print("The query output %s items, which is too many to display. Displaying the first 200 items:" % count)
-                for e in response.first():
+            capplusone = response.take(rumble.getRumbleConf().getResultSizeCap() + 1)
+            if len(capplusone) > rumble.getRumbleConf().getResultSizeCap():
+                count = response.count()
+                print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getResultSizeCap()))
+                for e in capplusone[:-1]:
                     print(json.dumps(json.loads(e.serializeAsJSON()), indent=2))
             else:
                 for e in response.json():

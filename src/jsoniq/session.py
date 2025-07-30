@@ -22,6 +22,9 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         self._sparksession = spark_session
         self._jrumblesession = spark_session._jvm.org.rumbledb.api.Rumble(spark_session._jsparkSession)
 
+    def getRumbleConf(self):
+        return self._jrumblesession.getConfiguration()
+
     class Builder:
         def __init__(self):
 
@@ -166,7 +169,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
 
     def jsoniq(self, str):
         sequence = self._jrumblesession.runQuery(str);
-        return SequenceOfItems(sequence, self._sparksession);
+        return SequenceOfItems(sequence, self);
 
     def __getattr__(self, item):
         return getattr(self._sparksession, item)
