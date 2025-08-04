@@ -10,7 +10,6 @@ class TryTesting(TestCase):
         # A more complex, standalone query
 
         seq = rumble.jsoniq("""
-        %%jsoniq
           max(
             let $path := "http://www.rumbledb.org/samples/git-archive-small.json"
             for $event in json-lines($path)
@@ -18,6 +17,6 @@ class TryTesting(TestCase):
           )
         """);
 
-        expected = (1)
+        expected = [1]
 
         self.assertTrue(json.dumps(seq.json()) == json.dumps(expected))
