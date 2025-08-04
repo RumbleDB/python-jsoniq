@@ -39,11 +39,8 @@ class JSONiqMagic(Magics):
             if len(capplusone) > rumble.getRumbleConf().getResultSizeCap():
                 count = response.count()
                 print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getResultSizeCap()))
-                for e in capplusone[:-1]:
-                    print(json.dumps(json.loads(e.serializeAsJSON()), indent=2))
-            else:
-                for e in response.json():
-                    print(json.dumps(e, indent=2))
+            for e in capplusone[:rumble.getRumbleConf().getResultSizeCap()]:
+                print(json.dumps(json.loads(e.serializeAsJSON()), indent=2))
         elif ("PUL" in response.availableOutputs()):
             print("The query output a Pending Update List.")
         else:
