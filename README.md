@@ -349,12 +349,13 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
-## Version 0.3.0 alpha 4
+## Version 0.2.0 alpha 4
 - Added parameters to the jsoniq magic to select the desired output to print: -j, -df, -pdf
 - Added informative error message with a hint on how to fix when trying to get a DataFrame and there is no schema.
 - Added parameter -t to the jsoniq magic to measure the response time
 - The RumbleSession object now saves the latest result (sequence of items) in a field called lastResult. This is particularly useful in notebooks for post-processing a result in Python after obtained it through the jsoniq magic.
 - Improved static type detection upon binding a pandas or pyspark DataFrame as an input variable to a JSONiq queries.
+- Now also accepts pandas version 2.2.
 
 ## Version 0.2.0 alpha 2
 - You can change the result size cap through to the now accessible Rumble configuration (for example rumble .getRumbleConf().setResultSizeCap(10)). This controls how many items can be retrieved at most with a json() call. You can increase it to whichever number you would like if you reach the cap.
