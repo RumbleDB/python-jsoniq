@@ -349,7 +349,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
-## Version 0.3.0 alpha 3
+## Version 0.3.0 alpha 4
 - Added parameters to the jsoniq magic to select the desired output to print: -j, -df, -pdf
 - Added informative error message with a hint on how to fix when trying to get a DataFrame and there is no schema.
 - Added parameter -t to the jsoniq magic to measure the response time
