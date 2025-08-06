@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsoniq"
-version = "0.2.0a3"
+version = "0.2.0a4"
 description = "Python edition of RumbleDB, a JSONiq engine"
 requires-python = ">=3.11"
 dependencies = [
     "pyspark==4.0",
-    "pandas==2.3"
+    "pandas>=2.2"
 ]
 authors = [
   {name = "Ghislain Fourny", email = "ghislain.fourny@inf.ethz.ch"},
