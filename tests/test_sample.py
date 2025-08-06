@@ -32,7 +32,7 @@ class TryTesting(TestCase):
         # Generally though, the results may contain zero, one, two, or more items.
         python_list = items.json()
         print(python_list)
-        self.assertTrue(json.dumps(python_list) == json.dumps((2)))
+        self.assertTrue(json.dumps(python_list) == json.dumps((2,)))
 
         ############################################
         ##### More complex, standalone queries #####
