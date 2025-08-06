@@ -10,12 +10,12 @@ No DataFrame available as no schema was automatically detected. If you still bel
 
 This is an example of how you can simply define a schema and wrap your query in a validate expression:
 
-declare type mytype as {
+declare type local:mytype as {
     "product" : "string",
     "store-number" : "int",
     "quantity" : "decimal"
 };
-validate type mytype* { 
+validate type local:mytype* { 
     for $product in json-lines("http://rumbledb.org/samples/products-small.json", 10)
     where $product.quantity ge 995
     return $product
