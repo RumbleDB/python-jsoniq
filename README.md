@@ -349,6 +349,9 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 0.2.0 alpha 5
+- If the initialization of the Spark session fails, we now check if SPARK_HOME is set and if it may be invalid or pointing to a different Spark version than 4.0, and output a more informative error message. 
+
 ## Version 0.2.0 alpha 4
 - Added parameters to the jsoniq magic to select the desired output to print: -j, -df, -pdf
 - Added informative error message with a hint on how to fix when trying to get a DataFrame and there is no schema.
