@@ -349,6 +349,10 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 0.2.0 alpha 6
+- Fix a bug with the config() call of the builder.
+- add withDelta() to configure Delta Lake tables and files, for use with the JSONiq Update Facility.
+
 ## Version 0.2.0 alpha 5
 - If the initialization of the Spark session fails, we now check if SPARK_HOME is set and if it may be invalid or pointing to a different Spark version than 4.0, and output a more informative error message. 
 
