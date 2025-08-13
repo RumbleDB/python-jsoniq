@@ -111,12 +111,15 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             self._sparkbuilder = self._sparkbuilder.master(url);
             return self;
     
-        def config(self, key, value):
-            self._sparkbuilder = self._sparkbuilder.config(key, value);   
+        def config(self, key=None, value=None, conf=None, *, map=None):
+            self._sparkbuilder = self._sparkbuilder.config(key=key, value=value, conf=conf, map=map)
             return self;
 
-        def config(self, conf):
-            self._sparkbuilder = self._sparkbuilder.config(conf);   
+        def withDelta(self):
+            self._sparkbuilder = self._sparkbuilder \
+                .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+                .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+                .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
             return self;
 
         def __getattr__(self, name):
