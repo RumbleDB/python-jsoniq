@@ -42,3 +42,9 @@ class TryTesting(TestCase):
         expected = [[{'nb': 1, 'state': 'MA', 'sold': 'broiler'}, {'nb': 1, 'state': 'MA', 'sold': 'socks'}, {'nb': 2, 'state': 'MA', 'sold': 'toaster'}, {'nb': 2, 'state': 'MA', 'sold': 'toaster'}, {'nb': 2, 'state': 'MA', 'sold': 'socks'}, {'nb': 3, 'state': 'CA', 'sold': 'toaster'}, {'nb': 3, 'state': 'CA', 'sold': 'blender'}, {'nb': 3, 'state': 'CA', 'sold': 'blender'}, {'nb': 3, 'state': 'CA', 'sold': 'shirt'}]]
 
         self.assertTrue(json.dumps(seq.json()) == json.dumps(expected))
+
+        self.assertIn("DataFrame", seq.availableOutputs())
+
+        seq.df().show()
+
+        self.assertEqual(seq.df().count(), 1)
