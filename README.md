@@ -350,6 +350,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 # Latest updates
 
 ## Version 0.2.0 alpha 7
+- rumble.lastResult now returns a pyspark/pandas DataFrame or rdd or tuple and no longer the sequence object.
 - Enhance schema detection. When the detected static type of the overall query is DataFrame-compatible, it is now automatically possible to obtain the output as a DataFrame without explicitly giving a schema.
 - It is now possible to access a table previously registered as a view via a table() function call. This is an alternative to binding variables.
 - Enhancements in the JSONiq Update Facility support to update delta files and Hive metastore tables.
