@@ -42,24 +42,28 @@ For more information, see the documentation at https://docs.rumbledb.org/rumbled
         return tuple(self.getFirstItemsAsList(self._rumblesession.getRumbleConf().getResultSizeCap()))
 
     def json(self):
-        return tuple([json.loads(l.serializeAsJSON()) for l in self._jsequence.getAsList()])
+        self._rumblesession.lastResult = tuple([json.loads(l.serializeAsJSON()) for l in self._jsequence.getAsList()])
+        return self._rumblesession.lastResult
 
     def rdd(self):
         rdd = self._jsequence.getAsPickledStringRDD()
         rdd = RDD(rdd, self._sparkcontext)
-        return rdd.map(lambda l: json.loads(l))
+        self._rumblesession.lastResult = rdd.map(lambda l: json.loads(l))
+        return self._rumblesession.lastResult
 
     def df(self):
         if (not "DataFrame" in self._jsequence.availableOutputs()):
             sys.stderr.write(self.schema_str)
             return None
-        return DataFrame(self._jsequence.getAsDataFrame(), self._sparksession)
+        self._rumblesession.lastResult = DataFrame(self._jsequence.getAsDataFrame(), self._sparksession)
+        return self._rumblesession.lastResult
 
     def pdf(self):
         if (not "DataFrame" in self._jsequence.availableOutputs()):
             sys.stderr.write(self.schema_str)
             return None
-        return self.df().toPandas()
+        self._rumblesession.lastResult = self.df().toPandas()
+        return self._rumblesession.lastResult
     
     def count(self):
         return self._jsequence.count()

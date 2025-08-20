@@ -200,8 +200,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
 
     def jsoniq(self, str):
         sequence = self._jrumblesession.runQuery(str);
-        self.lastResult = SequenceOfItems(sequence, self);
-        return self.lastResult;
+        return SequenceOfItems(sequence, self);
 
     def __getattr__(self, item):
         return getattr(self._sparksession, item)
