@@ -71,7 +71,11 @@ class TryTesting(TestCase):
         return [$join]
         """);
 
+        self.assertIn("DataFrame", seq.availableOutputs())
+        self.assertIn("RDD", seq.availableOutputs())
+        self.assertIn("Local", seq.availableOutputs())
         print(seq.json());
+        self.assertTrue(json.dumps(seq.json()) == json.dumps(([{'nb': 1, 'state': 'MA', 'sold': 'broiler'}, {'nb': 1, 'state': 'MA', 'sold': 'socks'}, {'nb': 2, 'state': 'MA', 'sold': 'toaster'}, {'nb': 2, 'state': 'MA', 'sold': 'toaster'}, {'nb': 2, 'state': 'MA', 'sold': 'socks'}, {'nb': 3, 'state': 'CA', 'sold': 'toaster'}, {'nb': 3, 'state': 'CA', 'sold': 'blender'}, {'nb': 3, 'state': 'CA', 'sold': 'blender'}, {'nb': 3, 'state': 'CA', 'sold': 'shirt'}],)))
 
         seq = rumble.jsoniq("""
         for $product in json-lines("http://rumbledb.org/samples/products-small.json", 10)
