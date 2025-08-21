@@ -157,6 +157,13 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         else:
             raise ValueError("Cannot yet convert value of type " + str(type(value)) + " to a RumbleDB item. Please open an issue and we will look into it!")
 
+    def unbind(self, name: str):
+        conf = self._jrumblesession.getConfiguration();
+        if not name.startswith("$"):
+            raise ValueError("Variable name must start with a dollar symbol ('$').")
+        name = name[1:]
+        conf.resetExternalVariableValue(name);
+
     def bind(self, name: str, valueToBind):
         conf = self._jrumblesession.getConfiguration();
         if not name.startswith("$"):
@@ -177,7 +184,28 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         elif isinstance(valueToBind, tuple):
             conf.setExternalVariableValue(name, self.convert(valueToBind))
         elif isinstance(valueToBind, list):
-            raise ValueError("To avoid confusion, a sequence of items must be provided as a Python tuple, not as a Python list. Lists are mapped to single array items, while tuples are mapped to sequences of items. If you want to interpret the list as a sequence of items (one item for each list member), then you need to change this list to a tuple by wrapping it into a tuple() call. If you want to bind the variable to one array item, then you need to wrap the provided list inside a singleton tuple and try again, or you can also call bindOne() instead.")
+            raise ValueError("""
+            To avoid confusion, a sequence of items must be provided as a Python tuple, not as a Python list.
+            Lists are mapped to single array items, while tuples are mapped to sequences of items.
+            
+            If you want to interpret the list as a sequence of items (one item for each list member), then you need to convert it to a tuple.
+            Example: [1,2,3] should then be rewritten as tuple([1,2,3]) for the sequence of three (integer) items 1, 2, and 3.
+
+            If you want to interpret the list as a sequence of one array item, then you need to create a singleton tuple.
+            Example: [1,2,3] should then be rewritten as ([1,2,3],) for the sequence of one (array) item [1,2,3].
+            """)
+        elif isinstance(valueToBind, dict):
+            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+        elif isinstance(valueToBind, str):
+            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+        elif isinstance(valueToBind, int):
+            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+        elif isinstance(valueToBind, float):
+            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+        elif isinstance(valueToBind, bool):
+            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+        elif valueToBind is None:
+            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
         elif(hasattr(valueToBind, "_get_object_id")):
             conf.setExternalVariableValue(name, valueToBind);
         else:
@@ -198,9 +226,14 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             conf.setExternalVariableValue(name, df._jdf);
         return self;
 
-    def jsoniq(self, str):
+    def jsoniq(self, str, **kwargs):
+        for key, value in kwargs.items():
+            self.bind(f"${key}", value);
         sequence = self._jrumblesession.runQuery(str);
-        return SequenceOfItems(sequence, self);
+        seq = SequenceOfItems(sequence, self);
+        for key, value in kwargs.items():
+            self.unbind(f"${key}");
+        return seq;
 
     def __getattr__(self, item):
         return getattr(self._sparksession, item)
