@@ -36,10 +36,12 @@ For more information, see the documentation at https://docs.rumbledb.org/rumbled
         return self.getAsList()
 
     def take(self, n):
-        return tuple(self.getFirstItemsAsList(n))
+        self._rumblesession.lastResult =  tuple(self.getFirstItemsAsList(n))
+        return self._rumblesession.lastResult
     
     def first(self):
-        return tuple(self.getFirstItemsAsList(self._rumblesession.getRumbleConf().getResultSizeCap()))
+        self._rumblesession.lastResult =  tuple(self.getFirstItemsAsList(self._rumblesession.getRumbleConf().getResultSizeCap()))
+        return self._rumblesession.lastResult
 
     def json(self):
         self._rumblesession.lastResult = tuple([json.loads(l.serializeAsJSON()) for l in self._jsequence.getAsList()])
