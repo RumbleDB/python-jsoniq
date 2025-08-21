@@ -341,6 +341,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 ## Version 0.2.0 alpha 8
 - Variables can now be bound to JSON values, pandas DataFrames or pyspark DataFrames with extra parameters to the rumble.jsoniq() call. It is no longer necessary to explicitly call bind(). This is similar to how DataFrames can be attached to views with extra parameters to spark.sql().
 - rumble.lastResult is now correctly assigned also when partial data is returned (only with the partial data).
+- Fixed issue with empty array constructors.
 
 ## Version 0.2.0 alpha 7
 - rumble.lastResult now returns a pyspark/pandas DataFrame or rdd or tuple and no longer the sequence object.
