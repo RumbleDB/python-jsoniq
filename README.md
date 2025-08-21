@@ -149,7 +149,7 @@ return [$join]
 
 print(seq.json());
 
-bindseq = rumble.jsoniq("""
+seq = rumble.jsoniq("""
 for $product in json-lines("http://rumbledb.org/samples/products-small.json", 10)
 group by $store-number := $product.store-number
 order by $store-number ascending
