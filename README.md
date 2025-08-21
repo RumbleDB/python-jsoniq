@@ -173,7 +173,6 @@ print(seq.json());
 # But if you need more (like date, bytes, etc) we will add them without any problem.
 # JSONiq has a rich type system.
  
-rumble.bind('$c', (1,2,3,4, 5, 6))
 print(rumble.jsoniq("""
 for $v in $c
 let $parity := $v mod 2
@@ -183,28 +182,24 @@ return { switch($parity)
          case 1 return "odd"
          default return "?" : $v
 }
-""").json())
+""", c=(1,2,3,4, 5, 6)).json())
 
-rumble.bind('$c', ([1,2,3],[4,5,6]))
 print(rumble.jsoniq("""
 for $i in $c
 return [
   for $j in $i
   return { "foo" : $j }
 ]
-""").json())
+""", c=([1,2,3],[4,5,6])).json())
 
-rumble.bind('$c', ({"foo":[1,2,3]},{"foo":[4,{"bar":[1,False, None]},6]}))
-print(rumble.jsoniq('{ "results" : $c.foo[[2]] }').json())
+print(rumble.jsoniq('{ "results" : $c.foo[[2]] }', c=({"foo":[1,2,3]},{"foo":[4,{"bar":[1,False, None]},6]})).json())
 
 # It is possible to bind only one value. The it must be provided as a singleton tuple.
 # This is because in JSONiq, an item is the same a sequence of one item.
-rumble.bind('$c', (42,))
-print(rumble.jsoniq('for $i in 1 to $c return $i*$i').json())
+print(rumble.jsoniq('for $i in 1 to $c return $i*$i', c=(42,)).json())
 
 # For convenience and code readability, you can also use bindOne().
-rumble.bindOne('$c', 42)
-print(rumble.jsoniq('for $i in 1 to $c return $i*$i').json())
+print(rumble.jsoniq('for $i in 1 to $c return $i*$i', c=42).json())
 
 ##########################################################
 ##### Binding JSONiq variables to pandas DataFrames ######
@@ -217,8 +212,7 @@ data = {'Name': ['Alice', 'Bob', 'Charlie'],
 pdf = pd.DataFrame(data);
 
 # Binding a pandas dataframe
-rumble.bind('$a',pdf);
-seq = rumble.jsoniq('$a.Name')
+seq = rumble.jsoniq('$a.Name', a=pdf)
 # Getting the output as a pandas dataframe
 print(seq.pdf())
 
@@ -239,13 +233,10 @@ data = [("Alice", 30), ("Bob", 25), ("Charlie", 35)];
 columns = ["Name", "Age"];
 df = spark.createDataFrame(data, columns);
 
-# This is how to bind a JSONiq variable to a dataframe. You can bind as many variables as you want.
-rumble.bind('$a', df);
-
-# This is how to run a query. This is similar to spark.sql().
-# Since variable $a was bound to a DataFrame, it is automatically declared as an external variable
+# You can bind JSONiq variables to pyspark DataFrames as follows. You can bind as many variables as you want.
+# Since variable $a is bound to a DataFrame, it is automatically declared as an external variable
 # and can be used in the query. In JSONiq, it is logically a sequence of objects.
-res = rumble.jsoniq('$a.Name');
+res = rumble.jsoniq('$a.Name', a=df);
 
 # There are several ways to collect the outputs, depending on the user needs but also
 # on the query supplied.
@@ -278,14 +269,12 @@ df2 = spark.sql("SELECT * FROM myview").toDF("name");
 df2.show();
 
 # A DataFrame output by Spark SQL can be reused as input to a JSONiq query.
-rumble.bind('$b', df2);
-seq2 = rumble.jsoniq("for $i in 1 to 5 return $b");
+seq2 = rumble.jsoniq("for $i in 1 to 5 return $b", b=df2);
 df3 = seq2.df();
 df3.show();
 
 # And a DataFrame output by JSONiq can be reused as input to another JSONiq query.
-rumble.bind('$b', df3);
-seq3 = rumble.jsoniq("$b[position() lt 3]");
+seq3 = rumble.jsoniq("$b[position() lt 3]", b=df3);
 df4 = seq3.df();
 df4.show();
 
@@ -335,7 +324,7 @@ for str in rdd.take(10):
 # RumbleDB was already tested with up to 64 AWS machines and 100s of TBs of data.
 # Of course the examples below are so small that it makes more sense to process the results locally with Python,
 # but this shows how GBs or TBs of data obtained from JSONiq can be written back to disk.
-seq = rumble.jsoniq("$a.Name");
+seq = rumble.jsoniq("$a.Name", a=spark.createDataFrame(data, columns));
 seq.write().mode("overwrite").json("outputjson");
 seq.write().mode("overwrite").parquet("outputparquet");
 
@@ -348,6 +337,11 @@ seq.write().mode("overwrite").text("outputtext");
 Even more queries can be found [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) and you can look at the [JSONiq documentation](https://www.jsoniq.org) and tutorials.
 
 # Latest updates
+
+## Version 0.2.0 alpha 8
+- Variables can now be bound to JSON values, pandas DataFrames or pyspark DataFrames with extra parameters to the rumble.jsoniq() call. It is no longer necessary to explicitly call bind(). This is similar to how DataFrames can be attached to views with extra parameters to spark.sql().
+- rumble.lastResult is now correctly assigned also when partial data is returned (only with the partial data).
+- Fixed issue with empty array constructors.
 
 ## Version 0.2.0 alpha 7
 - rumble.lastResult now returns a pyspark/pandas DataFrame or rdd or tuple and no longer the sequence object.
