@@ -341,6 +341,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 ## Version 2.0.0 alpha 1
 - When returning a single-column DataFrame with atomic values, the name is now __value and not value to avoid collisions with user-defined columns.
 - Improved schema inferrence: DataFrames can be returned in a wider range of cases.
+- Improved error display in notebooks when errors happen upon collecting the results and not already upon calling jsoniq().
 
 ## Version 0.2.0 alpha 9
 - Stability improvements.
