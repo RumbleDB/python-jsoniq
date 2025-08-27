@@ -67,24 +67,80 @@ validate type mytype* {
 """
 
         if(args.pyspark_data_frame):
-            df = response.df();
+            try:
+                df = response.df();
+            except Py4JJavaError as e:
+                print(e.java_exception.getMessage())
+                return
+            except Exception as e:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                print("Error message:")
+                print(e.args[0])
+                return
+            except:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                return
             if df is not None:
                 df.show()
 
         if (args.pandas_data_frame):
-            pdf = response.pdf()
+            try:
+                pdf = response.pdf()
+            except Py4JJavaError as e:
+                print(e.java_exception.getMessage())
+                return
+            except Exception as e:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                print("Error message:")
+                print(e.args[0])
+                return
+            except:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                return
             if pdf is not None:
                 print(pdf)
 
         if (args.apply_updates):
             if ("PUL" in response.availableOutputs()):
-                response.applyPUL()
+                try:
+                    response.applyPUL()
+                except Py4JJavaError as e:
+                    print(e.java_exception.getMessage())
+                    return
+                except Exception as e:
+                    print("Query unsuccessful.")
+                    print("Usual reasons: firewall, misconfigured proxy.")
+                    print("Error message:")
+                    print(e.args[0])
+                    return
+                except:
+                    print("Query unsuccessful.")
+                    print("Usual reasons: firewall, misconfigured proxy.")
+                    return  
                 print("Updates applied successfully.")
             else:
                 print("No Pending Update List (PUL) available to apply.")
         
         if (args.json or (not args.pandas_data_frame and not args.pyspark_data_frame)):
-            capplusone = response.take(rumble.getRumbleConf().getResultSizeCap() + 1)
+            try:
+                capplusone = response.take(rumble.getRumbleConf().getResultSizeCap() + 1)
+            except Py4JJavaError as e:
+                print(e.java_exception.getMessage())
+                return
+            except Exception as e:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                print("Error message:")
+                print(e.args[0])
+                return
+            except:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                return  
             if len(capplusone) > rumble.getRumbleConf().getResultSizeCap():
                 count = response.count()
                 print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getResultSizeCap()))
