@@ -88,10 +88,13 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                         sys.stderr.write("[Error] Could not determine Spark version. The SPARK_HOME environment variable may not be set properly. Please check that it points to a valid path to a Spark 4.0 directory, or maybe the easiest would be to delete the environment variable SPARK_HOME completely to fall back to the installation of Spark 4.0 packaged with pyspark.\n")
                         sys.stderr.write(f"Current value of SPARK_HOME: {os.environ.get('SPARK_HOME')}\n")
                         sys.exit(43)
-                    elif not spark_version.startswith("4.0"):
+                    elif not os.environ.get('SPARK_HOME') is None and not spark_version.startswith("4.0"):
                         sys.stderr.write(f"[Error] RumbleDB requires Spark 4.0, but found version {spark_version}. Please either set SPARK_HOME to a Spark 4.0 directory, or maybe the easiest would be to delete the environment variable SPARK_HOME completely to fall back to the installation of Spark 4.0 packaged with pyspark.\n")
                         sys.exit(43)
                     else:
+                        sys.stderr.write(f"[Error] SPARK_HOME is not set, but somehow pyspark is not falling back to the packaged Spark 4.0.0 version.\n")
+                        sys.stderr.write(f"We would appreciate a bug report with some information about your OS, setup, etc.\n")
+                        sys.stderr.write(f"In the meantime, what you could do as a workaround is download the Spark 4.0.0 zip file from spark.apache.org, unzip it to some local directory, and point SPARK_HOME to this directory.\n")
                         raise e
             return RumbleSession._rumbleSession
         
