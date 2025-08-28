@@ -102,7 +102,7 @@ validate type mytype* {
                 print("Usual reasons: firewall, misconfigured proxy.")
                 return
             if pdf is not None:
-                print(pdf)
+                return pdf
 
         if (args.apply_updates):
             if ("PUL" in response.availableOutputs()):

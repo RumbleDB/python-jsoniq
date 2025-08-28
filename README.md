@@ -338,6 +338,10 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.0.0
+- Aligned on the brand new RumbleDB 2.0 release.
+- Improved display of pandas dataframes output with -pdf in Jupyter notebooks.
+
 ## Version 2.0.0 alpha 1
 - When returning a single-column DataFrame with atomic values, the name is now __value and not value to avoid collisions with user-defined columns.
 - Improved schema inferrence: DataFrames can be returned in a wider range of cases.
