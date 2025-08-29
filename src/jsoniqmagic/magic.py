@@ -70,14 +70,20 @@ validate type mytype* {
             try:
                 df = response.df();
             except Py4JJavaError as e:
-                print(e.java_exception.getMessage())
+                if rumble.getRumbleConf().getShowErrorInfo() :
+                    raise e;
+                else:
+                    print(e.java_exception.getMessage())
                 return
             except Exception as e:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                print("Error message:")
-                print(e.args[0])
-                return
+                if rumble.getRumbleConf().getShowErrorInfo() :
+                    raise e;
+                else:
+                    print("Query unsuccessful.")
+                    print("Usual reasons: firewall, misconfigured proxy.")
+                    print("Error message:")
+                    print(e.args[0])
+                    return
             except:
                 print("Query unsuccessful.")
                 print("Usual reasons: firewall, misconfigured proxy.")
@@ -89,7 +95,10 @@ validate type mytype* {
             try:
                 pdf = response.pdf()
             except Py4JJavaError as e:
-                print(e.java_exception.getMessage())
+                if rumble.getRumbleConf().getShowErrorInfo() :
+                    raise e;
+                else:
+                    print(e.java_exception.getMessage())
                 return
             except Exception as e:
                 print("Query unsuccessful.")
@@ -102,14 +111,17 @@ validate type mytype* {
                 print("Usual reasons: firewall, misconfigured proxy.")
                 return
             if pdf is not None:
-                print(pdf)
+                return pdf
 
         if (args.apply_updates):
             if ("PUL" in response.availableOutputs()):
                 try:
                     response.applyPUL()
                 except Py4JJavaError as e:
-                    print(e.java_exception.getMessage())
+                    if rumble.getRumbleConf().getShowErrorInfo() :
+                        raise e;
+                    else:
+                        print(e.java_exception.getMessage())
                     return
                 except Exception as e:
                     print("Query unsuccessful.")
@@ -129,7 +141,10 @@ validate type mytype* {
             try:
                 capplusone = response.take(rumble.getRumbleConf().getResultSizeCap() + 1)
             except Py4JJavaError as e:
-                print(e.java_exception.getMessage())
+                if rumble.getRumbleConf().getShowErrorInfo() :
+                    raise e;
+                else:
+                    print(e.java_exception.getMessage())
                 return
             except Exception as e:
                 print("Query unsuccessful.")
