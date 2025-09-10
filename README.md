@@ -338,6 +338,10 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.0.1
+- Update to Spark 4.0.1.
+- Add postgreSQL connection (postgresql-table()).
+
 ## Version 2.0.0
 - Aligned on the brand new RumbleDB 2.0 release.
 - Improved display of pandas dataframes output with -pdf in Jupyter notebooks.
