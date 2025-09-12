@@ -125,6 +125,11 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                 .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
             return self;
 
+        def withMongo(self):
+            self._sparkbuilder = self._sparkbuilder \
+                .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.13:10.5.0")
+            return self;
+
         def __getattr__(self, name):
             res = getattr(self._sparkbuilder, name);
             return res;
