@@ -338,6 +338,9 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.0.2
+- Add MongoDB connection (mongodb-collection()). Requires including .withMongo() when creating the RumbleSession.
+
 ## Version 2.0.1
 - Update to Spark 4.0.1.
 - Add postgreSQL connection (postgresql-table()).
