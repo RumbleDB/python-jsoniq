@@ -338,6 +338,9 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.0.3
+- Some unquoted strings (like document, binary, pi, etc) were not properly recognized and could not be used as variable names or for unquoted object lookup. This is now fixed.
+
 ## Version 2.0.2
 - Add MongoDB connection (mongodb-collection()). Requires including .withMongo() when creating the RumbleSession.
 
