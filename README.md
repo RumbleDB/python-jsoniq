@@ -338,6 +338,10 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.0.4
+- Fixed an issue when running the library from a working directory that has spaces in the path.
+- Removed an overlooked debug output printing an internal DataFrame schema during evaluation of let clauses.
+
 ## Version 2.0.3
 - Some unquoted strings (like document, binary, pi, etc) were not properly recognized and could not be used as variable names or for unquoted object lookup. This is now fixed.
 
