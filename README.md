@@ -338,6 +338,9 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.0.5
+- Support for @ (primary keys) within arrays of objects and ? for allowing null in JSound compact schemas. It corresponds to unique, and a union with js:null, in the JSound verbose syntax.
+
 ## Version 2.0.4
 - Fixed an issue when running the library from a working directory that has spaces in the path.
 - Removed an overlooked debug output printing an internal DataFrame schema during evaluation of let clauses.
