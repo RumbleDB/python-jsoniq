@@ -11,6 +11,7 @@ class TryTesting(TestCase):
         # All attributes and methods of SparkSession are also available on RumbleSession. 
 
         rumble = RumbleSession.builder.getOrCreate();
+        rumble.getRumbleConf().setResultSizeCap(100);
 
         # Just to improve readability when invoking Spark methods
         # (such as spark.sql() or spark.createDataFrame()).
