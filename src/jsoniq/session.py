@@ -7,7 +7,7 @@ import re
 import pandas as pd
 import importlib.resources as pkg_resources
 
-with pkg_resources.path("jsoniq.jars", "rumbledb-2.0.0.jar") as jar_path:
+with pkg_resources.path("jsoniq.jars", "rumbledb-2.0.8.jar") as jar_path:
     jar_path_str = "file://" + str(jar_path)
 
 def get_spark_version():
