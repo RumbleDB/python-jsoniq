@@ -54,10 +54,16 @@ For more information, see the documentation at https://docs.rumbledb.org/rumbled
         return self._rumblesession.lastResult
 
     def df(self):
+        if (not "DataFrame" in self._jsequence.availableOutputs()):
+            sys.stderr.write(self.schema_str)
+            return None
         self._rumblesession.lastResult = DataFrame(self._jsequence.getAsDataFrame(), self._sparksession)
         return self._rumblesession.lastResult
 
     def pdf(self):
+        if (not "DataFrame" in self._jsequence.availableOutputs()):
+            sys.stderr.write(self.schema_str)
+            return None
         self._rumblesession.lastResult = self.df().toPandas()
         return self._rumblesession.lastResult
     
