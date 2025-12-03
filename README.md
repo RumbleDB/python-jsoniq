@@ -338,7 +338,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
-## Version 2.0.7
+## Version 2.0.8
 - Decoupled the internal materialization cap (when a parallel sequence of items is materialized, e.g., into an array) from the outer result size cap (for printing to screen) with now two distinct configuration parameters. The default materialization cap is set to 100'000 items while the default outer result size is set to 10. They can be changed by the user through the Rumble configuration.
 - Fixed an issue in the implementation when a FLWOR gets executed locally with a return clause with an underlying RDD or DataFrame. 
 
