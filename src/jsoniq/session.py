@@ -8,7 +8,11 @@ import pandas as pd
 import importlib.resources as pkg_resources
 
 with pkg_resources.path("jsoniq.jars", "rumbledb-2.0.8.jar") as jar_path:
-    jar_path_str = "file://" + str(jar_path)
+    if (os.name == 'nt'):
+        jar_path_str = str(jar_path)
+    else:
+        jar_path_str = "file://" + str(jar_path)
+    print(f"[Info] Using RumbleDB jar file at: {jar_path_str}")
 
 def get_spark_version():
     if os.environ.get('SPARK_HOME') != None:
