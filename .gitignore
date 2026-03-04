@@ -52,6 +52,9 @@ coverage.xml
 cover/
 
 # Iceberg & Delta runtime
+outputjson/
+outputparquet/
+outputtext/
 iceberg-warehouse/
 spark-warehouse/
 metastore_db/
