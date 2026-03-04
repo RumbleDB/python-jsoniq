@@ -51,6 +51,11 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Iceberg & Delta runtime
+iceberg-warehouse/
+spark-warehouse/
+metastore_db/
+
 # Translations
 *.mo
 *.pot
