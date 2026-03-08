@@ -122,3 +122,47 @@ class TestCatalogsUpdate(TestCase):
             self.rumble,
             f'iceberg-table("{iceberg_custom_table.split(".", 1)[1]}")'
         )
+
+    def test_resolution_order(self):
+        """
+        Matches Iceberg's catalog/namespace resolution order for spark.table().
+        Ensures unqualified access fails when spark_catalog is not Iceberg.
+        """
+        suffix = uuid.uuid4().hex
+        table_name = f"iceberg.default.iceberg_res_{suffix}"
+        short_name = f"iceberg_res_{suffix}"
+        multi_ns_table = f"iceberg.ns1.ns2.iceberg_res_{suffix}_ns"
+
+        self._create_insert_count(
+            self.rumble,
+            f'create collection iceberg-table("{table_name}") with {{"k": 1}}',
+            f'insert {{"k": 2}} last into collection iceberg-table("{table_name}")',
+            f'count(iceberg-table("{table_name}"))'
+        )
+
+        # catalog.table -> catalog.currentNamespace.table
+        self._create_insert_count(
+            self.rumble,
+            f'create collection iceberg-table("iceberg.{short_name}_2") with {{"k": 1}}',
+            f'insert {{"k": 2}} last into collection iceberg-table("iceberg.{short_name}_2")',
+            f'count(iceberg-table("iceberg.{short_name}_2"))'
+        )
+
+        # catalog.namespace1.namespace2.table -> catalog.namespace1.namespace2.table
+        self._create_insert_count(
+            self.rumble,
+            f'create collection iceberg-table("{multi_ns_table}") with {{"k": 1}}',
+            f'insert {{"k": 2}} last into collection iceberg-table("{multi_ns_table}")',
+            f'count(iceberg-table("{multi_ns_table}"))'
+        )
+
+        # namespace.table (current catalog) should fail because spark_catalog is not Iceberg here.
+        self._assert_query_fails(
+            self.rumble,
+            f'iceberg-table("default.{short_name}")'
+        )
+        # table (current catalog + namespace) should also fail for the same reason.
+        self._assert_query_fails(
+            self.rumble,
+            f'iceberg-table("{short_name}")'
+        )
