@@ -74,6 +74,10 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                 sys.stderr.write("[Error] Could not determine Java version. Please ensure Java is installed and JAVA_HOME is properly set.\n")
                 sys.exit(43)
             self._sparkbuilder = SparkSession.builder.config("spark.jars", jar_path_str)
+            self._appendable_keys = {
+                "spark.jars.packages",
+                "spark.sql.extensions",
+            }
 
         def getOrCreate(self):
             if RumbleSession._rumbleSession is None:
@@ -122,16 +126,60 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             self._sparkbuilder = self._sparkbuilder.config(key=key, value=value, conf=conf, map=map)
             return self;
 
+        def _append_config(self, key, value):
+            if key not in self._appendable_keys:
+                raise ValueError(f"{key} is not an appendable Spark config key.")
+            current = self._sparkbuilder._options.get(key)
+            if current:
+                value = current + "," + value
+            self._sparkbuilder = self._sparkbuilder.config(key=key, value=value)
+            return self;
+
         def withDelta(self):
+            self._append_config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
+            self._append_config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             self._sparkbuilder = self._sparkbuilder \
-                .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-                .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-                .config("spark.jars.packages", "io.delta:delta-spark_2.13:4.0.0")
+                .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+            return self;
+    
+        def withIceberg(self, catalog_names=None):
+            """
+            Configure Iceberg catalog(s).
+
+            - If no catalogs are provided (None or empty), the session catalog (spark_catalog)
+              is configured for Iceberg.
+            - If catalogs are provided, table names must be fully qualified with the catalog
+              (<catalog>.<namespace>.<table>). No implicit default is applied.
+            - Each configured catalog uses its own warehouse directory under
+              ./iceberg-warehouse/<catalog>.
+            - These are the default settings for the Iceberg catalog, which can be overridden if needed.
+            """
+            self._append_config("spark.jars.packages", "org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.0")
+            self._append_config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+            if catalog_names is None:
+                catalog_names = []
+            if not isinstance(catalog_names, (list, tuple, set)):
+                raise ValueError("catalog_names must be a list, tuple, or set of strings.")
+            catalog_names = list(catalog_names)
+            if len(catalog_names) == 0:
+                catalog_names = ["spark_catalog"]
+                catalog_class = "org.apache.iceberg.spark.SparkSessionCatalog"
+            else:
+                catalog_class = "org.apache.iceberg.spark.SparkCatalog"
+            for catalog_name in catalog_names:
+                if not isinstance(catalog_name, str) or not catalog_name:
+                    raise ValueError("catalog_names must contain non-empty strings.")
+                warehouse = f"./iceberg-warehouse/{catalog_name}"
+                self._sparkbuilder = self._sparkbuilder \
+                    .config(f"spark.sql.catalog.{catalog_name}", catalog_class) \
+                    .config(f"spark.sql.catalog.{catalog_name}.type", "hadoop") \
+                    .config(f"spark.sql.catalog.{catalog_name}.warehouse", warehouse)
+            self._sparkbuilder = self._sparkbuilder \
+                .config("spark.sql.iceberg.check-ordering", "false")
             return self;
 
         def withMongo(self):
-            self._sparkbuilder = self._sparkbuilder \
-                .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.13:10.5.0")
+            self._append_config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.13:10.5.0")
             return self;
 
         def __getattr__(self, name):
