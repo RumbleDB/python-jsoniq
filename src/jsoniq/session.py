@@ -5,9 +5,9 @@ import platform
 import os
 import re
 import pandas as pd
-import importlib.resources as pkg_resources
+from importlib.resources import files, as_file
 
-with pkg_resources.path("jsoniq.jars", "rumbledb-2.1.0.jar") as jar_path:
+with as_file(files("jsoniq.jars").joinpath("rumbledb-2.1.0.jar")) as jar_path:
     if (os.name == 'nt'):
         jar_path_str = str(jar_path)
     else:
