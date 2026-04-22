@@ -338,6 +338,9 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.1.0
+- Upgraded to the RumbleDB 2.1.0 underlying Java implementation. More details on new features (including enhanced XML/XQuery 3.1 support) at https://github.com/RumbleDB/rumble/releases/tag/v2.1.0
+
 ## Version 2.0.9
 - Solve an issue under Windows that caused the error "Java gateway process exited before sending its port number.".
 

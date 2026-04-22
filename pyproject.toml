@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsoniq"
-version = "2.0.9"
+version = "2.1.0"
 description = "Python edition of RumbleDB, a JSONiq engine"
 requires-python = ">=3.11"
 dependencies = [
-    "pyspark==4.0.1",
+    "pyspark==4.0.2",
     "pandas>=2.2",
     "delta-spark==4.0"
 ]
