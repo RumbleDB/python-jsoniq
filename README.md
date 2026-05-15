@@ -1,7 +1,5 @@
 # RumbleDB for Python
 
-by Abishek Ramdas and Ghislain Fourny
-
 This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Python.
 
 JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
@@ -18,7 +16,7 @@ It works on your laptop as well as on any Spark cluster (AWS, company clusters, 
 
 It automatically detects and switches between execution modes in a way transparent to the user, bringing the convenience of data independence to the world of messy data.
 
-It is an academic project, natively in Java, carried out at ETH Zurich by many students over more than 8 years: Stefan Irimescu, Renato Marroquin, Rodrigo Bruno, Falko Noé, Ioana Stefan, Andrea Rinaldi, Stevan Mihajlovic, Mario Arduini, Can Berker Çıkış, Elwin Stephan, David Dao, Zirun Wang, Ingo Müller, Dan-Ovidiu Graur, Thomas Zhou, Olivier Goerens, Alexandru Meterez, Pierre Motard, Remo Röthlisberger, Dominik Bruggisser, David Loughlin, David Buzatu, Marco Schöb, Maciej Byczko, Matteo Agnoletto, Dwij Dixit.
+It is an academic project, natively in Java, carried out at ETH Zurich by Ghislain Fourny's students over more than 8 years: Stefan Irimescu, Renato Marroquin, Rodrigo Bruno, Falko Noé, Ioana Stefan, Andrea Rinaldi, Stevan Mihajlovic, Mario Arduini, Can Berker Çıkış, Elwin Stephan, David Dao, Zirun Wang, Ingo Müller, Dan-Ovidiu Graur, Thomas Zhou, Olivier Goerens, Alexandru Meterez, Pierre Motard, Remo Röthlisberger, Dominik Bruggisser, David Loughlin, David Buzatu, Marco Schöb, Maciej Byczko, Matteo Agnoletto, Dwij Dixit, Abishek Ramdas.
 
 It is free and open source, under an Apache 2.0 license, which can also be used commercially (but on an as-is basis with no guarantee).
 
@@ -337,6 +335,9 @@ seq.write().mode("overwrite").text("outputtext");
 Even more queries can be found [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) and you can look at the [JSONiq documentation](https://www.jsoniq.org) and tutorials.
 
 # Latest updates
+
+## Version 2.1.1
+- Fixed a bug preventing the display of some query outputs as a Data Frame.
 
 ## Version 2.1.0
 - Upgraded to the RumbleDB 2.1.0 underlying Java implementation. More details on new features (including enhanced XML/XQuery 3.1 support) at https://github.com/RumbleDB/rumble/releases/tag/v2.1.0
