@@ -267,7 +267,7 @@ class TryTesting(TestCase):
             ]
         }
         """);
-        test_df.pdf().show();
+        print(test_df.pdf());
 
         ###################################################
         ###### Write back to the disk (or data lake) ######
