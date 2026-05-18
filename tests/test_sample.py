@@ -254,6 +254,20 @@ class TryTesting(TestCase):
         print(rdd.count());
         for str in rdd.take(10):
             print(str);
+        
+        test_df = rumble.jsoniq(r"""
+            {
+                "operations" : [
+                  { "binary" : [ "and", "or"] },
+                  { "unary" : ["not"] },
+                  { "none" : [] }
+                ],
+            "bits" : [
+            0, 1
+            ]
+        }
+        """);
+        test_df.pdf().show();
 
         ###################################################
         ###### Write back to the disk (or data lake) ######
