@@ -337,6 +337,10 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 # Latest updates
 
 ## Version 2.1.1
+- Extend data frame detection to nested arrays.
+- More bugfixes.
+
+## Version 2.1.1
 - Fixed a bug preventing the display of some query outputs as a Data Frame.
 
 ## Version 2.1.0
