@@ -336,7 +336,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
-## Version 2.1.4
+## Version 2.1.5
 - Extend data frame detection to the presence of JSON nulls.
 - Many improvements supporting built-in function and improved XML/XQuery 3.1 support.
 

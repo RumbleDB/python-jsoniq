@@ -7,7 +7,7 @@ import re
 import pandas as pd
 from importlib.resources import files, as_file
 
-with as_file(files("jsoniq.jars").joinpath("rumbledb-2.1.4.jar")) as jar_path:
+with as_file(files("jsoniq.jars").joinpath("rumbledb-2.1.5.jar")) as jar_path:
     if (os.name == 'nt'):
         jar_path_str = str(jar_path)
     else:
