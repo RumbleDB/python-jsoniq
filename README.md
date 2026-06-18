@@ -336,6 +336,10 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 2.1.8
+- The order of the columns in output DataFrames were occasionally reshuffled. This new version keeps the column order more stable.
+- Further improvements supporting built-in function and improved XML/XQuery 3.1 support.
+
 ## Version 2.1.7
 - Extend data frame detection to the presence of JSON nulls.
 - Many improvements supporting built-in function and improved XML/XQuery 3.1 support.
