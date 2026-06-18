@@ -2,6 +2,8 @@
 
 This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Python.
 
+The Python edition is relatively recent. In many cases, `pip install jsoniq` just works. In some other instances (e.g., another version of Spark is installed locally), it might be unstable. We welcome feedback to improve the installation experience. 
+
 JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
 
 Spark aficionados can also pass DataFrames to JSONiq queries and take back DataFrames. This gives them an environment in which both Spark SQL and JSONiq co-exist to manipulate the data. 
