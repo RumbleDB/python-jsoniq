@@ -2,6 +2,10 @@
 
 This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Python.
 
+[See in action](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb)!
+
+The Python edition is relatively recent. In many cases, `pip install jsoniq` just works. In some other instances (e.g., another version of Spark is installed locally), it might be unstable. We welcome feedback to improve the installation experience. 
+
 JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
 
 Spark aficionados can also pass DataFrames to JSONiq queries and take back DataFrames. This gives them an environment in which both Spark SQL and JSONiq co-exist to manipulate the data. 
@@ -335,6 +339,11 @@ seq.write().mode("overwrite").text("outputtext");
 Even more queries can be found [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) and you can look at the [JSONiq documentation](https://www.jsoniq.org) and tutorials.
 
 # Latest updates
+
+## Version 2.1.8
+- The order of the columns in output DataFrames were occasionally reshuffled. This new version keeps the column order more stable.
+- Further improvements supporting built-in function and improved XML/XQuery 3.1 support.
+- Update to Spark 4.0.3.
 
 ## Version 2.1.7
 - Extend data frame detection to the presence of JSON nulls.
