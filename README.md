@@ -340,7 +340,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
-## Version 2.1.8
+## Version 2.1.9
 - The order of the columns in output DataFrames were occasionally reshuffled. This new version keeps the column order more stable.
 - Further improvements supporting built-in function and improved XML/XQuery 3.1 support.
 - Update to Spark 4.0.3.
@@ -455,4 +455,3 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 - Ability to write back a sequence of items to local disk, HDFS, S3... in various formats (JSON, CSV, Parquet...).
 - Automatically declare external variables bound as DataFrames to improve userfriendliness.
 - Simplified the function names to make them more intuitive (json(), items(), df(), rdd(), etc).
-
