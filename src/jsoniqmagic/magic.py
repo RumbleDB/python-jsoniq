@@ -157,8 +157,7 @@ validate type mytype* {
                 print("Usual reasons: firewall, misconfigured proxy.")
                 return  
             if len(capplusone) > rumble.getRumbleConf().getResultSizeCap():
-                count = response.count()
-                print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getResultSizeCap()))
+                print("The query output too many items to display. Displaying the first %s items:" % (rumble.getRumbleConf().getResultSizeCap()))
             for e in capplusone[:rumble.getRumbleConf().getResultSizeCap()]:
                 print(json.dumps(json.loads(e.serializeAsJSON()), indent=2))
 
