@@ -233,7 +233,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         name = name[1:]
         if isinstance(valueToBind, SequenceOfItems):
             outputs = valueToBind.availableOutputs()
-            if "DataFrame" in outputs:
+            if isinstance(outputs, (list, JavaList)) and "DataFrame" in outputs:
                 self._bindings[name] = ("bindDataFrame", valueToBind.df()._jdf)
             else:
                 self._bindings[name] = ("bindItems", valueToBind.items())
