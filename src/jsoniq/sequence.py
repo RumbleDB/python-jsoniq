@@ -40,7 +40,7 @@ For more information, see the documentation at https://docs.rumbledb.org/rumbled
         return self._rumblesession.lastResult
     
     def first(self):
-        self._rumblesession.lastResult =  tuple(self.getFirstItemsAsList(self._rumblesession.getRumbleConf().getResultSizeCap()))
+        self._rumblesession.lastResult =  tuple(self.getFirstItemsAsList(self._rumblesession.getRumbleConf().getInt("runtime.resultsSizeCap")))
         return self._rumblesession.lastResult
 
     def json(self):

@@ -17,23 +17,5 @@ class RumbleConfiguration:
         )
         return self
 
-    def getResultSizeCap(self):
-        return self.getInt("runtime.resultsSizeCap")
-
-    def setResultSizeCap(self, value):
-        return self.set("runtime.resultsSizeCap", value)
-
-    def getMaterializationCap(self):
-        return self.getInt("runtime.materializationCap")
-
-    def setMaterializationCap(self, value):
-        return self.set("runtime.materializationCap", value)
-
-    def getShowErrorInfo(self):
-        return self.getBoolean("debug.showErrorInfo")
-
-    def setShowErrorInfo(self, value):
-        return self.set("debug.showErrorInfo", value)
-
     def __getattr__(self, name):
         return getattr(self._session._jrumblesession.getConfiguration(), name)

@@ -342,7 +342,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 ## Version 3.0.0
 - Upgraded to RumbleDB 3.0.0 and its immutable configuration and external bindings APIs.
-- Preserved `getRumbleConf().setResultSizeCap(...)`, `setMaterializationCap(...)`, and `setShowErrorInfo(...)` through a Python adapter. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
+- Configuration reads use the Java API directly, such as `getInt("runtime.resultsSizeCap")` and `getBoolean("debug.showErrorInfo")`. The Python `set(path, value)` helper rebuilds the immutable Java configuration. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
 - Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
 
 Configuration can also be changed using RumbleDB 3.0's dot-separated paths:

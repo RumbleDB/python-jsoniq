@@ -25,32 +25,32 @@ def test_configuration_updates_preserve_session_and_other_settings(rumble):
     spark = rumble._sparksession._jsparkSession
     rumble.bind("$saved", 42)
     try:
-        conf.setResultSizeCap(2)
-        conf.setShowErrorInfo(True)
-        assert conf.getResultSizeCap() == 2
-        assert conf.getShowErrorInfo() is True
+        conf.set("runtime.resultsSizeCap", 2)
+        conf.set("debug.showErrorInfo", True)
+        assert conf.getInt("runtime.resultsSizeCap") == 2
+        assert conf.getBoolean("debug.showErrorInfo") is True
         assert rumble.getRumbleConf() is conf
         assert rumble._sparksession._jsparkSession == spark
         assert rumble.jsoniq("$saved").json() == (42,)
         assert len(rumble.jsoniq("1 to 5").first()) == 2
         assert rumble.jsoniq("1 to 5").json() == (1, 2, 3, 4, 5)
     finally:
-        conf.setResultSizeCap(10)
-        conf.setShowErrorInfo(False)
+        conf.set("runtime.resultsSizeCap", 10)
+        conf.set("debug.showErrorInfo", False)
         rumble.unbind("$saved")
 
 
 def test_materialization_cap_applies_to_new_queries(rumble):
     conf = rumble.getRumbleConf()
-    original = conf.getMaterializationCap()
+    original = conf.getInt("runtime.materializationCap")
     existing = rumble.jsoniq("1 to 3")
     try:
-        conf.setMaterializationCap(2)
+        conf.set("runtime.materializationCap", 2)
         assert existing.json() == (1, 2, 3)
         with pytest.raises(Py4JJavaError, match="Cannot materialize"):
             rumble.jsoniq("1 to 3").json()
     finally:
-        conf.setMaterializationCap(original)
+        conf.set("runtime.materializationCap", original)
 
 
 @pytest.mark.parametrize("value", [42, 1.5, True, None, "hello", {"a": [1, False, None]}, (1, 2, 3), ([1, 2],)])
@@ -113,12 +113,12 @@ def test_notebook_extension_and_display(rumble, capsys):
     with patch.object(RumbleSession.Builder, "getOrCreate", return_value=rumble):
         load_ipython_extension(shell)
         shell.register_magics.assert_called_once_with(JSONiqMagic)
-        assert rumble.getRumbleConf().getResultSizeCap() == 10
-        rumble.getRumbleConf().setResultSizeCap(2)
+        assert rumble.getRumbleConf().getInt("runtime.resultsSizeCap") == 10
+        rumble.getRumbleConf().set("runtime.resultsSizeCap", 2)
         try:
             JSONiqMagic().run("", "1 to 3")
             output = capsys.readouterr().out
             assert "Displaying the first 2 items" in output
             assert output.endswith("1\n2\n")
         finally:
-            rumble.getRumbleConf().setResultSizeCap(10)
+            rumble.getRumbleConf().set("runtime.resultsSizeCap", 10)
