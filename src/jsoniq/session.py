@@ -1,5 +1,7 @@
 from pyspark.sql import SparkSession
+from py4j.java_collections import JavaList
 from .sequence import SequenceOfItems
+from .configuration import RumbleConfiguration
 import sys
 import platform
 import os
@@ -34,9 +36,11 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
     def __init__(self, spark_session: SparkSession):
         self._sparksession = spark_session
         self._jrumblesession = spark_session._jvm.org.rumbledb.api.Rumble(spark_session._jsparkSession)
+        self._configuration = RumbleConfiguration(self)
+        self._bindings = {}
 
     def getRumbleConf(self):
-        return self._jrumblesession.getConfiguration()
+        return self._configuration
 
     class Builder:
         def __init__(self):
@@ -213,36 +217,33 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                 java_list = self._sparksession._jvm.java.util.ArrayList()
                 java_list.add(self.convert(v))
                 java_map[k] = java_list
-            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createObjectItem(java_map, False)
+            return self._sparksession._jvm.org.rumbledb.items.ItemFactory.getInstance().createObjectItemFromValueLists(java_map, False)
         else:
             raise ValueError("Cannot yet convert value of type " + str(type(value)) + " to a RumbleDB item. Please open an issue and we will look into it!")
 
     def unbind(self, name: str):
-        conf = self._jrumblesession.getConfiguration();
         if not name.startswith("$"):
             raise ValueError("Variable name must start with a dollar symbol ('$').")
         name = name[1:]
-        conf.resetExternalVariableValue(name);
+        self._bindings.pop(name, None)
 
     def bind(self, name: str, valueToBind):
-        conf = self._jrumblesession.getConfiguration();
         if not name.startswith("$"):
             raise ValueError("Variable name must start with a dollar symbol ('$').")
         name = name[1:]
         if isinstance(valueToBind, SequenceOfItems):
             outputs = valueToBind.availableOutputs()
-            if isinstance(outputs, list) and "DataFrame" in outputs:
-                conf.setExternalVariableValue(name, valueToBind.df());
-            # TODO support binding a variable to an RDD
-            #elif isinstance(outputs, list) and "RDD" in outputs:
-            #    conf.setExternalVariableValue(name, valueToBind.getAsRDD());
+            if "DataFrame" in outputs:
+                self._bindings[name] = ("bindDataFrame", valueToBind.df()._jdf)
             else:
-                conf.setExternalVariableValue(name, valueToBind.items());
+                self._bindings[name] = ("bindItems", valueToBind.items())
         elif isinstance(valueToBind, pd.DataFrame):
             pysparkdf = self._sparksession.createDataFrame(valueToBind)
-            conf.setExternalVariableValue(name, pysparkdf._jdf);
+            self._bindings[name] = ("bindDataFrame", pysparkdf._jdf)
         elif isinstance(valueToBind, tuple):
-            conf.setExternalVariableValue(name, self.convert(valueToBind))
+            self._bindings[name] = ("bindItems", self.convert(valueToBind))
+        elif isinstance(valueToBind, JavaList):
+            self._bindings[name] = ("bindItems", valueToBind)
         elif isinstance(valueToBind, list):
             raise ValueError("""
             To avoid confusion, a sequence of items must be provided as a Python tuple, not as a Python list.
@@ -255,45 +256,48 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             Example: [1,2,3] should then be rewritten as ([1,2,3],) for the sequence of one (array) item [1,2,3].
             """)
         elif isinstance(valueToBind, dict):
-            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+            self._bindings[name] = ("bindItems", self.convert((valueToBind,)))
         elif isinstance(valueToBind, str):
-            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+            self._bindings[name] = ("bindItems", self.convert((valueToBind,)))
         elif isinstance(valueToBind, int):
-            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+            self._bindings[name] = ("bindItems", self.convert((valueToBind,)))
         elif isinstance(valueToBind, float):
-            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+            self._bindings[name] = ("bindItems", self.convert((valueToBind,)))
         elif isinstance(valueToBind, bool):
-            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+            self._bindings[name] = ("bindItems", self.convert((valueToBind,)))
         elif valueToBind is None:
-            conf.setExternalVariableValue(name, self.convert((valueToBind, )))
+            self._bindings[name] = ("bindItems", self.convert((valueToBind,)))
         elif(hasattr(valueToBind, "_get_object_id")):
-            conf.setExternalVariableValue(name, valueToBind);
+            self._bindings[name] = ("bindDataFrame", valueToBind)
         else:
-            conf.setExternalVariableValue(name, valueToBind._jdf);
+            self._bindings[name] = ("bindDataFrame", valueToBind._jdf)
         return self;
 
     def bindOne(self, name: str, value):
         return self.bind(name, (value,))
 
     def bindDataFrameAsVariable(self, name: str, df):
-        conf = self._jrumblesession.getConfiguration();
         if not name.startswith("$"):
             raise ValueError("Variable name must start with a dollar symbol ('$').")
         name = name[1:]
         if(hasattr(df, "_get_object_id")):
-            conf.setExternalVariableValue(name, df);
+            self._bindings[name] = ("bindDataFrame", df)
         else:
-            conf.setExternalVariableValue(name, df._jdf);
+            self._bindings[name] = ("bindDataFrame", df._jdf)
         return self;
 
     def jsoniq(self, str, **kwargs):
-        for key, value in kwargs.items():
-            self.bind(f"${key}", value);
-        sequence = self._jrumblesession.runQuery(str);
-        seq = SequenceOfItems(sequence, self);
-        for key, value in kwargs.items():
-            self.unbind(f"${key}");
-        return seq;
+        previous_bindings = self._bindings.copy()
+        try:
+            for key, value in kwargs.items():
+                self.bind(f"${key}", value)
+            bindings = self._sparksession._jvm.org.rumbledb.api.ExternalBindings()
+            for name, (method, value) in self._bindings.items():
+                getattr(bindings, method)(name, value)
+            sequence = self._jrumblesession.runQuery(str, bindings)
+            return SequenceOfItems(sequence, self)
+        finally:
+            self._bindings = previous_bindings
 
     def __getattr__(self, item):
         return getattr(self._sparksession, item)

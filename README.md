@@ -340,6 +340,21 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 3.0.0
+- Upgraded to RumbleDB 3.0.0 and its immutable configuration and external bindings APIs.
+- Preserved `getRumbleConf().setResultSizeCap(...)`, `setMaterializationCap(...)`, and `setShowErrorInfo(...)` through a Python adapter. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
+- Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
+
+Configuration can also be changed using RumbleDB 3.0's dot-separated paths:
+
+```python
+rumble.getRumbleConf().set("runtime.resultsSizeCap", 100)
+rumble.getRumbleConf().set("runtime.materializationCap", 100000)
+rumble.getRumbleConf().set("debug.showErrorInfo", True)
+```
+
+The result size cap controls `first()` and notebook display. `json()` retrieves all items, subject to the separate materialization cap.
+
 ## Version 2.1.9
 - Fixed a bug in the inferred conversion to DataFrames of output involving arrays of objects.
 
