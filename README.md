@@ -475,7 +475,7 @@ The result size cap controls `first()` and notebook display. `json()` retrieves 
 - Now also accepts pandas version 2.2.
 
 ## Version 0.2.0 alpha 2
-- Added access to the Rumble configuration to change the result size cap. For the current API and cap semantics, see the Version 3.0.0 notes above.
+- You can change the result size cap through to the now accessible Rumble configuration (for example rumble .getRumbleConf().setResultSizeCap(10)). This controls how many items can be retrieved at most with a json() call. You can increase it to whichever number you would like if you reach the cap.
 - Add the JSONiq magic to execute JSONiq queries directly in a notebook cell, using the RumbleDB instance shipped with the library.
 - RumbleSession.builder.getOrCreate() now correctly reuses an existing session instead of creating a new object. It preserves the configuration. 
 
