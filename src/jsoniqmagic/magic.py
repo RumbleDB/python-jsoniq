@@ -22,6 +22,9 @@ class JSONiqMagic(Magics):
         '-j', '--json', action='store_true', help='Prints the output as JSON.'
     )
     @argument(
+        '-s', '--serialize', action='store_true', help='Prints the serialized result sequence without additional quoting.'
+    )
+    @argument(
         '-u', '--apply-updates', action='store_true', help='Applies updates if a PUL is output.'
     )
     def run(self, line, cell=None, timed=False):
@@ -47,6 +50,29 @@ class JSONiqMagic(Magics):
         except:
             print("Query unsuccessful.")
             print("Usual reasons: firewall, misconfigured proxy.")
+            return
+
+        if args.serialize:
+            try:
+                serialized = response.serialize()
+            except Py4JJavaError as e:
+                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo"):
+                    raise
+                print(e.java_exception.getMessage())
+                return
+            except Exception as e:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                print("Error message:")
+                print(e.args[0])
+                return
+            except:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                return
+            print(serialized)
+            if args.timed:
+                print("Response time: %s ms" % (time.time() - start))
             return
 
         schema_str = """

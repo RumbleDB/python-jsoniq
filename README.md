@@ -38,7 +38,7 @@ The resulting sequence of items can be retrieved as a list of JSON values, as a 
 
 It is also possible to write the sequence of items to the local disk, to HDFS, to S3, etc in a way similar to how DataFrames are written back by Pyspark.
 
-The library also contains a jsoniq magic that allows you to directly write JSONiq queries in a Jupyter notebook and see the results automatically output on the screen.
+The library also contains a jsoniq magic that allows you to directly write JSONiq queries in a Jupyter notebook and see the results automatically output on the screen. In notebooks, you can use `%%jsoniq -s` (or `--serialize`) to serialize the result sequence to text output, according to the XSLT and XQuery Serialization 3.1 specification by W3C. The method and serialization options can all be specified in the query with option declarations, following the XQuery/JSONiq standard. `%%jsoniq -j` shows the results in JSON lines format, while `%%jsoniq -pdf` shows a pandas data frame, and `%%jsoniq -df` shows a Spark data frame.
 
 The design goal is that it is possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
 

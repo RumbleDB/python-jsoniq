@@ -120,5 +120,8 @@ def test_notebook_extension_and_display(rumble, capsys):
             output = capsys.readouterr().out
             assert "Displaying the first 2 items" in output
             assert output.endswith("1\n2\n")
+            serialized = rumble.jsoniq("1 to 3").serialize()
+            JSONiqMagic().jsoniq("-s", "1 to 3")
+            assert capsys.readouterr().out == serialized + "\n"
         finally:
             rumble.getRumbleConf().set("runtime.resultsSizeCap", 10)
