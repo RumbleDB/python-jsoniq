@@ -30,6 +30,13 @@ A RumbleSession is a wrapper around a SparkSession that additionally makes sure 
 
 JSONiq queries are invoked with rumble.jsoniq() in a way similar to the way Spark SQL queries are invoked with spark.sql().
 
+Use `rumble.xquery()` to run queries with XQuery 3.1 as the default language. It accepts the same keyword variable bindings and returns the same `SequenceOfItems` as `rumble.jsoniq()`, while preserving the session configuration. An explicit language version declaration in the query overrides the default.
+
+```python
+result = rumble.xquery("<greeting>{$name}</greeting>", name="World")
+print(result.serialize())  # XML declaration followed by <greeting>World</greeting>
+```
+
 JSONiq variables can be bound to lists of JSON values (str, int, float, True, False, None, dict, list) or to Pyspark DataFrames. A JSONiq query can use as many variables as needed (for example, it can join between different collections).
 
 It will later also be possible to read tables registered in the Hive metastore, similar to spark.sql(). Alternatively, the JSONiq query can also read many files of many different formats from many places (local drive, HTTP, S3, HDFS, ...) directly with simple builtin function calls such as json-lines(), text-file(), parquet-file(), csv-file(), etc. See [RumbleDB's documentation](https://docs.rumbledb.org/writing-jsoniq-queries-in-python).
@@ -39,6 +46,13 @@ The resulting sequence of items can be retrieved as a list of JSON values, as a 
 It is also possible to write the sequence of items to the local disk, to HDFS, to S3, etc in a way similar to how DataFrames are written back by Pyspark.
 
 The library also contains a jsoniq magic that allows you to directly write JSONiq queries in a Jupyter notebook and see the results automatically output on the screen. In notebooks, you can use `%%jsoniq -s` (or `--serialize`) to serialize the result sequence to text output, according to the XSLT and XQuery Serialization 3.1 specification by W3C. The method and serialization options can all be specified in the query with option declarations, following the XQuery/JSONiq standard. `%%jsoniq -j` shows the results in JSON lines format, while `%%jsoniq -pdf` shows a pandas data frame, and `%%jsoniq -df` shows a Spark data frame.
+
+The same notebook extension also registers `%%xquery`, which calls `rumble.xquery()` and defaults to serialized output (`-s`) with the XML serialization method. Query option declarations in the `http://www.w3.org/2010/xslt-xquery-serialization` namespace can override the serialization method. It accepts the same options: use `-j`, `-df`, or `-pdf` to select another output format, `-u` to apply updates, and `-t` to show execution time.
+
+```xquery
+%%xquery
+<greeting>Hello, world!</greeting>
+```
 
 The design goal is that it is possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
 
@@ -374,18 +388,16 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 ## Version 3.0.0
 - Upgraded to RumbleDB 3.0.0 and its immutable configuration and external bindings APIs.
-- Configuration reads use the Java API directly, such as `getInt("runtime.resultsSizeCap")` and `getBoolean("debug.showErrorInfo")`. The Python `set(path, value)` helper rebuilds the immutable Java configuration. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
-- Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
-
-Configuration can also be changed using RumbleDB 3.0's dot-separated paths:
-
+- There is a breaking change in how configuration parameters are set. New:
 ```python
 rumble.getRumbleConf().set("runtime.resultsSizeCap", 100)
 rumble.getRumbleConf().set("runtime.materializationCap", 100000)
 rumble.getRumbleConf().set("debug.showErrorInfo", True)
 ```
-
-The result size cap controls `first()` and notebook display. `json()` retrieves all items, subject to the separate materialization cap.
+- Calling old configuration functions leads to a message explaining the new syntax. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
+- Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
+- New rumble.xquery() call and %%xquery magic.
+- In the %%jsoniq magic, the new -s parameter outputs the results as a single string following the W3C Serialization 3.1 specification. If using `rumble.xquery()` or `rumble.jsoniq()` call, the same can be achieved by chaining a `.serialize() ` call returning a string.  All standard serialization methods (xml, json, xhtml, html, text, adaptive) are available. For %%xquery, this is the default behavior.
 
 ## Version 2.1.9
 - Fixed a bug in the inferred conversion to DataFrames of output involving arrays of objects.
