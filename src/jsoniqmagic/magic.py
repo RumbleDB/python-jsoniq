@@ -22,6 +22,9 @@ class JSONiqMagic(Magics):
         '-j', '--json', action='store_true', help='Prints the output as JSON.'
     )
     @argument(
+        '-s', '--serialize', action='store_true', help='Prints the serialized result sequence without additional quoting.'
+    )
+    @argument(
         '-u', '--apply-updates', action='store_true', help='Applies updates if a PUL is output.'
     )
     def run(self, line, cell=None, timed=False):
@@ -49,6 +52,29 @@ class JSONiqMagic(Magics):
             print("Usual reasons: firewall, misconfigured proxy.")
             return
 
+        if args.serialize:
+            try:
+                serialized = response.serialize()
+            except Py4JJavaError as e:
+                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo"):
+                    raise
+                print(e.java_exception.getMessage())
+                return
+            except Exception as e:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                print("Error message:")
+                print(e.args[0])
+                return
+            except:
+                print("Query unsuccessful.")
+                print("Usual reasons: firewall, misconfigured proxy.")
+                return
+            print(serialized)
+            if args.timed:
+                print("Response time: %s ms" % (time.time() - start))
+            return
+
         schema_str = """
 No DataFrame available as no schema was detected. If you still believe the output is structured enough, you could add a schema and validate expression explicitly to your query.
 
@@ -70,13 +96,13 @@ validate type mytype* {
             try:
                 df = response.df();
             except Py4JJavaError as e:
-                if rumble.getRumbleConf().getShowErrorInfo() :
+                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
                     raise e;
                 else:
                     print(e.java_exception.getMessage())
                 return
             except Exception as e:
-                if rumble.getRumbleConf().getShowErrorInfo() :
+                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
                     raise e;
                 else:
                     print("Query unsuccessful.")
@@ -95,7 +121,7 @@ validate type mytype* {
             try:
                 pdf = response.pdf()
             except Py4JJavaError as e:
-                if rumble.getRumbleConf().getShowErrorInfo() :
+                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
                     raise e;
                 else:
                     print(e.java_exception.getMessage())
@@ -118,7 +144,7 @@ validate type mytype* {
                 try:
                     response.applyPUL()
                 except Py4JJavaError as e:
-                    if rumble.getRumbleConf().getShowErrorInfo() :
+                    if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
                         raise e;
                     else:
                         print(e.java_exception.getMessage())
@@ -139,9 +165,9 @@ validate type mytype* {
         
         if (args.json or (not args.pandas_data_frame and not args.pyspark_data_frame)):
             try:
-                capplusone = response.take(rumble.getRumbleConf().getResultSizeCap() + 1)
+                capplusone = response.take(rumble.getRumbleConf().getInt("runtime.resultsSizeCap") + 1)
             except Py4JJavaError as e:
-                if rumble.getRumbleConf().getShowErrorInfo() :
+                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
                     raise e;
                 else:
                     print(e.java_exception.getMessage())
@@ -156,10 +182,10 @@ validate type mytype* {
                 print("Query unsuccessful.")
                 print("Usual reasons: firewall, misconfigured proxy.")
                 return  
-            if len(capplusone) > rumble.getRumbleConf().getResultSizeCap():
+            if len(capplusone) > rumble.getRumbleConf().getInt("runtime.resultsSizeCap"):
                 count = response.count()
-                print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getResultSizeCap()))
-            for e in capplusone[:rumble.getRumbleConf().getResultSizeCap()]:
+                print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getInt("runtime.resultsSizeCap")))
+            for e in capplusone[:rumble.getRumbleConf().getInt("runtime.resultsSizeCap")]:
                 print(json.dumps(json.loads(e.serializeAsJSON()), indent=2))
 
         end = time.time()
