@@ -105,6 +105,39 @@ def test_item_iteration_and_rdd(rumble):
     assert rumble.jsoniq("1 to 3").rdd().collect() == [1, 2, 3]
 
 
+def test_xquery_uses_xquery_default_without_changing_session(rumble):
+    conf = rumble.getRumbleConf()
+    language = conf.getString("semantics.queryLanguage")
+    result = rumble.xquery("<greeting>{$name}</greeting>", name="World")
+    assert result.getRuntimeStaticContext().getSerializationParameters().getMethod() == "xml"
+    assert result.serialize() == '<?xml version="1.0" encoding="UTF-8"?><greeting>World</greeting>'
+    assert rumble.xquery("map { 'answer': 42 }?answer").json() == (42,)
+    assert rumble.xquery('jsoniq version "1.0"; { "answer": 42 }.answer').json() == (42,)
+    assert conf.getString("semantics.queryLanguage") == language
+    assert rumble.jsoniq('{ "answer": 42 }.answer').json() == (42,)
+
+
+def test_xquery_preserves_configuration_and_restores_bindings_on_failure(rumble):
+    conf = rumble.getRumbleConf()
+    cap = conf.getInt("runtime.resultsSizeCap")
+    rumble.bind("$saved", 7)
+    try:
+        conf.set("runtime.resultsSizeCap", 2)
+        result = rumble.xquery("$saved, 2, 3", saved=9)
+        assert result.json() == (9, 2, 3)
+        assert len(result.first()) == 2
+        assert rumble.xquery("$saved").json() == (7,)
+        with pytest.raises(Py4JJavaError):
+            rumble.xquery("1 +", saved=11)
+        assert rumble.jsoniq("$saved").json() == (7,)
+        with pytest.raises(ValueError):
+            rumble.xquery("$saved", saved=11, invalid=[1])
+        assert rumble.xquery("$saved").json() == (7,)
+    finally:
+        conf.set("runtime.resultsSizeCap", cap)
+        rumble.unbind("$saved")
+
+
 def test_notebook_extension_and_display(rumble, capsys):
     pytest.importorskip("IPython")
     from jsoniqmagic import JSONiqMagic, load_ipython_extension
@@ -113,6 +146,7 @@ def test_notebook_extension_and_display(rumble, capsys):
     with patch.object(RumbleSession.Builder, "getOrCreate", return_value=rumble):
         load_ipython_extension(shell)
         shell.register_magics.assert_called_once_with(JSONiqMagic)
+        assert "xquery" in JSONiqMagic.magics["cell"]
         assert rumble.getRumbleConf().getInt("runtime.resultsSizeCap") == 10
         rumble.getRumbleConf().set("runtime.resultsSizeCap", 2)
         try:
@@ -123,5 +157,18 @@ def test_notebook_extension_and_display(rumble, capsys):
             serialized = rumble.jsoniq("1 to 3").serialize()
             JSONiqMagic().jsoniq("-s", "1 to 3")
             assert capsys.readouterr().out == serialized + "\n"
+            query = "<greeting>Hello</greeting>"
+            JSONiqMagic().xquery("", query)
+            assert capsys.readouterr().out == '<?xml version="1.0" encoding="UTF-8"?><greeting>Hello</greeting>\n'
+            JSONiqMagic().xquery("", '''
+                declare namespace output = "http://www.w3.org/2010/xslt-xquery-serialization";
+                declare option output:method "text";
+                <greeting>Hello</greeting>
+            ''')
+            assert capsys.readouterr().out == "Hello\n"
+            JSONiqMagic().xquery("-j", "1 to 3")
+            output = capsys.readouterr().out
+            assert "Displaying the first 2 items" in output
+            assert output.endswith("1\n2\n")
         finally:
             rumble.getRumbleConf().set("runtime.resultsSizeCap", 10)

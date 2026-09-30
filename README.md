@@ -30,6 +30,13 @@ A RumbleSession is a wrapper around a SparkSession that additionally makes sure 
 
 JSONiq queries are invoked with rumble.jsoniq() in a way similar to the way Spark SQL queries are invoked with spark.sql().
 
+Use `rumble.xquery()` to run queries with XQuery 3.1 as the default language. It accepts the same keyword variable bindings and returns the same `SequenceOfItems` as `rumble.jsoniq()`, while preserving the session configuration. An explicit language version declaration in the query overrides the default.
+
+```python
+result = rumble.xquery("<greeting>{$name}</greeting>", name="World")
+print(result.serialize())  # XML declaration followed by <greeting>World</greeting>
+```
+
 JSONiq variables can be bound to lists of JSON values (str, int, float, True, False, None, dict, list) or to Pyspark DataFrames. A JSONiq query can use as many variables as needed (for example, it can join between different collections).
 
 It will later also be possible to read tables registered in the Hive metastore, similar to spark.sql(). Alternatively, the JSONiq query can also read many files of many different formats from many places (local drive, HTTP, S3, HDFS, ...) directly with simple builtin function calls such as json-lines(), text-file(), parquet-file(), csv-file(), etc. See [RumbleDB's documentation](https://docs.rumbledb.org/writing-jsoniq-queries-in-python).
@@ -39,6 +46,13 @@ The resulting sequence of items can be retrieved as a list of JSON values, as a 
 It is also possible to write the sequence of items to the local disk, to HDFS, to S3, etc in a way similar to how DataFrames are written back by Pyspark.
 
 The library also contains a jsoniq magic that allows you to directly write JSONiq queries in a Jupyter notebook and see the results automatically output on the screen. In notebooks, you can use `%%jsoniq -s` (or `--serialize`) to serialize the result sequence to text output, according to the XSLT and XQuery Serialization 3.1 specification by W3C. The method and serialization options can all be specified in the query with option declarations, following the XQuery/JSONiq standard. `%%jsoniq -j` shows the results in JSON lines format, while `%%jsoniq -pdf` shows a pandas data frame, and `%%jsoniq -df` shows a Spark data frame.
+
+The same notebook extension also registers `%%xquery`, which calls `rumble.xquery()` and defaults to serialized output (`-s`) with the XML serialization method. Query option declarations in the `http://www.w3.org/2010/xslt-xquery-serialization` namespace can override the serialization method. It accepts the same options: use `-j`, `-df`, or `-pdf` to select another output format, `-u` to apply updates, and `-t` to show execution time.
+
+```xquery
+%%xquery
+<greeting>Hello, world!</greeting>
+```
 
 The design goal is that it is possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
 

@@ -287,6 +287,16 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         return self;
 
     def jsoniq(self, str, **kwargs):
+        return self._run_query(str, self._jrumblesession, kwargs)
+
+    def xquery(self, str, **kwargs):
+        """Run a query with XQuery 3.1 as the default language."""
+        builder = self._jrumblesession.getConfiguration().toBuilder()
+        configuration = getattr(builder, "with")("semantics.queryLanguage", "xquery31").build()
+        engine = self._sparksession._jvm.org.rumbledb.api.Rumble(configuration)
+        return self._run_query(str, engine, kwargs)
+
+    def _run_query(self, query, engine, kwargs):
         previous_bindings = self._bindings.copy()
         try:
             for key, value in kwargs.items():
@@ -294,7 +304,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             bindings = self._sparksession._jvm.org.rumbledb.api.ExternalBindings()
             for name, (method, value) in self._bindings.items():
                 getattr(bindings, method)(name, value)
-            sequence = self._jrumblesession.runQuery(str, bindings)
+            sequence = engine.runQuery(query, bindings)
             return SequenceOfItems(sequence, self)
         finally:
             self._bindings = previous_bindings

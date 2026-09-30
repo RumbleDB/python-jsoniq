@@ -40,5 +40,6 @@ jobs:
       run: |
         # run tests independently to enable tests using spark session
         for f in tests/test_*.py; do
+          echo "Running tests in $f"
           pytest -q "$f" || exit 1
         done

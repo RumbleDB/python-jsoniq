@@ -27,17 +27,21 @@ class JSONiqMagic(Magics):
     @argument(
         '-u', '--apply-updates', action='store_true', help='Applies updates if a PUL is output.'
     )
-    def run(self, line, cell=None, timed=False):
+    def run(self, line, cell=None, timed=False, language="jsoniq"):
         if cell is None:
             data = line
         else:
             data = cell
 
         args = parse_argstring(self.run, line)
+        if language == "xquery" and not (
+            args.json or args.pandas_data_frame or args.pyspark_data_frame or args.apply_updates
+        ):
+            args.serialize = True
         start = time.time()
         try:
             rumble = RumbleSession.builder.getOrCreate();
-            response = rumble.jsoniq(data);
+            response = getattr(rumble, language)(data);
         except Py4JJavaError as e:
             print(e.java_exception.getMessage())
             return
@@ -195,3 +199,7 @@ validate type mytype* {
     @cell_magic
     def jsoniq(self, line, cell=None):
         return self.run(line, cell, False)
+
+    @cell_magic
+    def xquery(self, line, cell=None):
+        return self.run(line, cell, False, language="xquery")
