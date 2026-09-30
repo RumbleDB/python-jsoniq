@@ -6,8 +6,11 @@ import sys
 import platform
 import os
 import re
+from threading import RLock
 import pandas as pd
 from importlib.resources import files, as_file
+
+_spark_creation_lock = RLock()
 
 with as_file(files("jsoniq.jars").joinpath("rumbledb-3.0.0.jar")) as jar_path:
     if (os.name == 'nt'):
@@ -78,23 +81,48 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                 sys.stderr.write("[Error] Could not determine Java version. Please ensure Java is installed and JAVA_HOME is properly set.\n")
                 sys.exit(43)
             self._sparkbuilder = SparkSession.builder.config("spark.jars", jar_path_str)
+            self._use_bundled_spark = True
             self._appendable_keys = {
                 "spark.jars.packages",
                 "spark.sql.extensions",
             }
 
+        def withBundledSpark(self, enabled=True):
+            """Use PySpark's bundled Spark by default; pass False to respect SPARK_HOME.
+
+            This only affects startup of a new JVM. Existing sessions are reused.
+            """
+            self._use_bundled_spark = enabled
+            return self
+
+        def _create_session(self, method):
+            # Serialize this library's startup calls while changing the process environment.
+            with _spark_creation_lock:
+                if not self._use_bundled_spark:
+                    return RumbleSession(getattr(self._sparkbuilder, method)())
+                previous_spark_home = os.environ.pop("SPARK_HOME", None)
+                try:
+                    return RumbleSession(getattr(self._sparkbuilder, method)())
+                finally:
+                    if previous_spark_home is None:
+                        os.environ.pop("SPARK_HOME", None)
+                    else:
+                        os.environ["SPARK_HOME"] = previous_spark_home
+
         def getOrCreate(self):
             if RumbleSession._rumbleSession is None:
                 try:
-                    RumbleSession._rumbleSession = RumbleSession(self._sparkbuilder.getOrCreate())
+                    RumbleSession._rumbleSession = self._create_session("getOrCreate")
                 except FileNotFoundError as e:
-                    if not os.environ.get('SPARK_HOME') is None:
+                    if not self._use_bundled_spark and not os.environ.get('SPARK_HOME') is None:
                         sys.stderr.write("[Error] SPARK_HOME environment variable may not be set properly. Please check that it points to a valid path to a Spark 4.0 directory, or maybe the easiest would be to delete the environment variable SPARK_HOME completely to fall back to the installation of Spark 4.0 packaged with pyspark.\n")
                         sys.stderr.write(f"Current value of SPARK_HOME: {os.environ.get('SPARK_HOME')}\n")
                         sys.exit(43)
                     else:
                         raise e
                 except TypeError as e:
+                    if self._use_bundled_spark:
+                        raise
                     spark_version = get_spark_version()
                     if not os.environ.get('SPARK_HOME') is None and spark_version is None:
                         sys.stderr.write("[Error] Could not determine Spark version. The SPARK_HOME environment variable may not be set properly. Please check that it points to a valid path to a Spark 4.0 directory, or maybe the easiest would be to delete the environment variable SPARK_HOME completely to fall back to the installation of Spark 4.0 packaged with pyspark.\n")
@@ -111,7 +139,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             return RumbleSession._rumbleSession
         
         def create(self):
-            RumbleSession._rumbleSession = RumbleSession(self._sparkbuilder.create())
+            RumbleSession._rumbleSession = self._create_session("create")
             return RumbleSession._rumbleSession
 
         def remote(self, spark_url):

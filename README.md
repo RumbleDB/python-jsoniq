@@ -88,6 +88,14 @@ pip install jsoniq
 
 *Important note*: since the jsoniq package depends on pyspark 4, Java 17 or Java 21 is a requirement. If another version of Java is installed, the execution of a Python program attempting to create a RumbleSession will lead to an error message on stderr that contains explanations.
 
+By default, session creation uses Spark bundled with PySpark. Both `getOrCreate()` and `create()` temporarily unset `SPARK_HOME` and restore its original value (or absence) after startup, even if startup fails. To use an external Spark installation configured through `SPARK_HOME`, opt out before creating the session:
+
+```python
+rumble = RumbleSession.builder.withBundledSpark(False).getOrCreate()
+```
+
+Use `withBundledSpark()` or `withBundledSpark(True)` to enable the default again. This setting cannot change the Spark installation of an existing session or JVM. Startup calls through this library are serialized while the environment is changed; unrelated threads should avoid changing `SPARK_HOME` or starting Spark at the same time.
+
 ## Sample code
 
 We will make more documentation available as we go. In the meantime, you will find a sample, commented code below that should just run
@@ -386,7 +394,7 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
-## Version 3.0.0
+## Version 3.0.1
 - Upgraded to RumbleDB 3.0.0 and its immutable configuration and external bindings APIs.
 - There is a breaking change in how configuration parameters are set. New:
 ```python
@@ -398,6 +406,7 @@ rumble.getRumbleConf().set("debug.showErrorInfo", True)
 - Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
 - New rumble.xquery() call and %%xquery magic.
 - In the %%jsoniq magic, the new -s parameter outputs the results as a single string following the W3C Serialization 3.1 specification. If using `rumble.xquery()` or `rumble.jsoniq()` call, the same can be achieved by chaining a `.serialize() ` call returning a string.  All standard serialization methods (xml, json, xhtml, html, text, adaptive) are available. For %%xquery, this is the default behavior.
+- By default, the Spark bundled with pyspark is used. Use .withBundledSpark(False) when creating the session to use a different spark installation that SPARK_HOME points to (for advanced users only).
 
 ## Version 2.1.9
 - Fixed a bug in the inferred conversion to DataFrames of output involving arrays of objects.
