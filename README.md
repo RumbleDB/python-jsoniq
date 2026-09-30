@@ -388,18 +388,16 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 ## Version 3.0.0
 - Upgraded to RumbleDB 3.0.0 and its immutable configuration and external bindings APIs.
-- Configuration reads use the Java API directly, such as `getInt("runtime.resultsSizeCap")` and `getBoolean("debug.showErrorInfo")`. The Python `set(path, value)` helper rebuilds the immutable Java configuration. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
-- Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
-
-Configuration can also be changed using RumbleDB 3.0's dot-separated paths:
-
+- There is a breaking change in how configuration parameters are set. New:
 ```python
 rumble.getRumbleConf().set("runtime.resultsSizeCap", 100)
 rumble.getRumbleConf().set("runtime.materializationCap", 100000)
 rumble.getRumbleConf().set("debug.showErrorInfo", True)
 ```
-
-The result size cap controls `first()` and notebook display. `json()` retrieves all items, subject to the separate materialization cap.
+- Calling old configuration functions leads to a message explaining the new syntax. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
+- Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
+- New rumble.xquery() call and %%xquery magic.
+- In the %%jsoniq magic, the new -s parameter outputs the results as a single string following the W3C Serialization 3.1 specification. If using `rumble.xquery()` or `rumble.jsoniq()` call, the same can be achieved by chaining a `.serialize() ` call returning a string.  All standard serialization methods (xml, json, xhtml, html, text, adaptive) are available. For %%xquery, this is the default behavior.
 
 ## Version 2.1.9
 - Fixed a bug in the inferred conversion to DataFrames of output involving arrays of objects.
