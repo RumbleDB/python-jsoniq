@@ -7,6 +7,7 @@ import platform
 import os
 import re
 from threading import RLock
+from types import GeneratorType
 import pandas as pd
 from importlib.resources import files, as_file
 
@@ -17,7 +18,6 @@ with as_file(files("jsoniq.jars").joinpath("rumbledb-3.0.0.jar")) as jar_path:
         jar_path_str = str(jar_path)
     else:
         jar_path_str = "file://" + str(jar_path)
-    print(f"[Info] Using RumbleDB jar file at: {jar_path_str}")
 
 def get_spark_version():
     if os.environ.get('SPARK_HOME') != None:
@@ -36,11 +36,15 @@ class MetaRumbleSession(type):
             return getattr(SparkSession, item)
     
 class RumbleSession(object, metaclass=MetaRumbleSession):
-    def __init__(self, spark_session: SparkSession):
+    def __init__(self, spark_session: SparkSession, rumble_options=None):
         self._sparksession = spark_session
         self._jrumblesession = spark_session._jvm.org.rumbledb.api.Rumble(spark_session._jsparkSession)
         self._configuration = RumbleConfiguration(self)
         self._bindings = {}
+        for path, value in (rumble_options or {}).items():
+            self._configuration.set(path, value)
+        if self._configuration.getBoolean("debug.showErrorInfo"):
+            print(f"[Info] Using RumbleDB jar file at: {jar_path_str}")
 
     def getRumbleConf(self):
         return self._configuration
@@ -82,10 +86,20 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                 sys.exit(43)
             self._sparkbuilder = SparkSession.builder.config("spark.jars", jar_path_str)
             self._use_bundled_spark = True
+            self._rumble_options = {}
             self._appendable_keys = {
                 "spark.jars.packages",
                 "spark.sql.extensions",
             }
+
+        def rumbleConfig(self, path, value):
+            """Set a Rumble configuration path for new or reused sessions.
+
+            Settings are retained by this builder; repeated paths use the last value.
+            Use config() for Spark settings.
+            """
+            self._rumble_options[path] = value
+            return self
 
         def withBundledSpark(self, enabled=True):
             """Use PySpark's bundled Spark by default; pass False to respect SPARK_HOME.
@@ -99,10 +113,10 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             # Serialize this library's startup calls while changing the process environment.
             with _spark_creation_lock:
                 if not self._use_bundled_spark:
-                    return RumbleSession(getattr(self._sparkbuilder, method)())
+                    return RumbleSession(getattr(self._sparkbuilder, method)(), self._rumble_options)
                 previous_spark_home = os.environ.pop("SPARK_HOME", None)
                 try:
-                    return RumbleSession(getattr(self._sparkbuilder, method)())
+                    return RumbleSession(getattr(self._sparkbuilder, method)(), self._rumble_options)
                 finally:
                     if previous_spark_home is None:
                         os.environ.pop("SPARK_HOME", None)
@@ -136,6 +150,9 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                         sys.stderr.write(f"We would appreciate a bug report with some information about your OS, setup, etc.\n")
                         sys.stderr.write(f"In the meantime, what you could do as a workaround is download the Spark 4.0.0 zip file from spark.apache.org, unzip it to some local directory, and point SPARK_HOME to this directory.\n")
                         raise e
+            else:
+                for path, value in self._rumble_options.items():
+                    RumbleSession._rumbleSession.getRumbleConf().set(path, value)
             return RumbleSession._rumbleSession
         
         def create(self):
@@ -259,6 +276,8 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
         if not name.startswith("$"):
             raise ValueError("Variable name must start with a dollar symbol ('$').")
         name = name[1:]
+        if isinstance(valueToBind, GeneratorType):
+            valueToBind = tuple(valueToBind)
         if isinstance(valueToBind, SequenceOfItems):
             outputs = valueToBind.availableOutputs()
             if isinstance(outputs, (list, JavaList)) and "DataFrame" in outputs:

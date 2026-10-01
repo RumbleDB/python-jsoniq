@@ -111,13 +111,18 @@ import pandas as pd
 # A RumbleSession is a SparkSession that additionally knows about RumbleDB.
 # SparkSession methods such as createDataFrame() and sql() are also available on RumbleSession.
 
-rumble = RumbleSession.builder.getOrCreate()
+# rumbleConfig() applies Rumble settings before startup messages, or to a reused session.
+# config() remains available for Spark settings.
+rumble = (
+    RumbleSession.builder
+    .rumbleConfig("debug.showErrorInfo", True)
+    .getOrCreate()
+)
 
 # Configure subsequent queries using RumbleDB 3.0's dot-separated paths.
 # The result size cap controls first() and notebook display; json() uses the materialization cap.
 rumble.getRumbleConf().set("runtime.resultsSizeCap", 100)
 rumble.getRumbleConf().set("runtime.materializationCap", 100000)
-rumble.getRumbleConf().set("debug.showErrorInfo", True)
 print(rumble.getRumbleConf().getInt("runtime.resultsSizeCap"))
 
 # Just to improve readability when invoking Spark methods
@@ -203,6 +208,8 @@ print(seq.json())
 # and then use it in a query.
 # In JSONiq, variables and query results are sequences of items.
 # A Python tuple will be seamlessly converted to a sequence of items by the library.
+# Python generators are consumed into tuples and bound as sequences of items too.
+# Generators must be finite; their contents are materialized in memory when bound.
 # Scalars can be strings, ints, floats, booleans, None, or dicts.
 # Lists represent array items: wrap a list in a singleton tuple to bind one array.
 # Keyword bindings apply only to this query; they do not persist on the session.
