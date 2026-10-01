@@ -99,6 +99,20 @@ def test_bundled_spark_can_be_reenabled(builder, monkeypatch):
     assert os.environ["SPARK_HOME"] == "/external/spark"
 
 
+def test_rumble_config_applies_to_reused_session(builder, monkeypatch, capsys):
+    existing = Mock()
+    monkeypatch.setattr(RumbleSession, "_rumbleSession", existing)
+    assert builder.rumbleConfig("debug.showErrorInfo", False) is builder
+    builder.rumbleConfig("debug.showErrorInfo", True)
+    builder.rumbleConfig("runtime.resultsSizeCap", 2)
+    assert builder.getOrCreate() is existing
+    existing.getRumbleConf.return_value.set.assert_any_call("debug.showErrorInfo", True)
+    existing.getRumbleConf.return_value.set.assert_any_call("runtime.resultsSizeCap", 2)
+    assert existing.getRumbleConf.return_value.set.call_count == 2
+    builder._sparkbuilder.getOrCreate.assert_not_called()
+    assert "Using RumbleDB jar file" not in capsys.readouterr().out
+
+
 def test_bundled_spark_starts_with_invalid_external_home(monkeypatch, tmp_path):
     monkeypatch.setattr(RumbleSession, "_rumbleSession", None)
     invalid_home = str(tmp_path / "missing-spark")

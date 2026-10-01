@@ -20,6 +20,28 @@ def rumble():
     RumbleSession._rumbleSession = None
 
 
+@pytest.mark.parametrize("bundled_spark", [False, True])
+@pytest.mark.parametrize("show_error_info", [False, True])
+def test_builder_rumble_config_before_startup(rumble, monkeypatch, capsys, bundled_spark, show_error_info):
+    monkeypatch.setattr(RumbleSession, "_rumbleSession", None)
+    builder = (
+        RumbleSession.Builder()
+        .withBundledSpark(bundled_spark)
+        .rumbleConfig("debug.showErrorInfo", show_error_info)
+        .rumbleConfig("runtime.resultsSizeCap", 2)
+    )
+    capsys.readouterr()
+    session = builder.getOrCreate()
+    assert ("Using RumbleDB jar file" in capsys.readouterr().out) == show_error_info
+    assert session.getRumbleConf().getBoolean("debug.showErrorInfo") is show_error_info
+    assert session.getRumbleConf().getInt("runtime.resultsSizeCap") == 2
+    assert len(session.jsoniq("1 to 3").first()) == 2
+    builder.rumbleConfig("debug.showErrorInfo", not show_error_info)
+    assert builder.getOrCreate() is session
+    assert session.getRumbleConf().getBoolean("debug.showErrorInfo") is not show_error_info
+    assert "Using RumbleDB jar file" not in capsys.readouterr().out
+
+
 def test_configuration_updates_preserve_session_and_other_settings(rumble):
     conf = rumble.getRumbleConf()
     spark = rumble._sparksession._jsparkSession
@@ -59,6 +81,18 @@ def test_python_value_bindings(rumble, value):
     assert rumble.jsoniq("$value", value=value).json() == expected
     with pytest.raises(Py4JJavaError):
         rumble.jsoniq("$value")
+
+
+@pytest.mark.parametrize("values", [(), ({"foo": [42]},) * 10, (1, "two", [3], None)])
+def test_generator_bindings(rumble, values):
+    generated = (value for value in values)
+    rumble.bind("$generated", generated)
+    try:
+        assert rumble.jsoniq("$generated").json() == values
+        assert tuple(generated) == ()
+        assert rumble.jsoniq("$temporary", temporary=(value for value in values)).json() == values
+    finally:
+        rumble.unbind("$generated")
 
 
 def test_keyword_bindings_restore_persistent_values_even_on_failure(rumble):
