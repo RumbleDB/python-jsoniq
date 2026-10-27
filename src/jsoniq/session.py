@@ -13,7 +13,7 @@ from importlib.resources import files, as_file
 
 _spark_creation_lock = RLock()
 
-with as_file(files("jsoniq.jars").joinpath("rumbledb-3.0.0.jar")) as jar_path:
+with as_file(files("jsoniq.jars").joinpath("rumbledb-3.0.3.jar")) as jar_path:
     if (os.name == 'nt'):
         jar_path_str = str(jar_path)
     else:
