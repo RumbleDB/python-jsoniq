@@ -401,7 +401,11 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
-## Version 3.0.1
+## Version 3.0.3
+
+- Mainly bugfixes and increased compliance with the W3C standard, and improvements related to the language server.
+
+## Version 3.0.2
 - Upgraded to RumbleDB 3.0.0 and its immutable configuration and external bindings APIs.
 - There is a breaking change in how configuration parameters are set. New:
 ```python
