@@ -123,7 +123,7 @@ def test_bundled_spark_starts_with_invalid_external_home(monkeypatch, tmp_path):
             RumbleSession.Builder().master("local[2]")
             .config("spark.ui.enabled", "false").getOrCreate()
         )
-        assert session.version == "4.0.3"
+        assert session.version == "4.0.5"
         assert session.jsoniq("1 + 1").json() == (2,)
         assert os.environ["SPARK_HOME"] == invalid_home
     finally:
