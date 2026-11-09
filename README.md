@@ -1,21 +1,23 @@
 # RumbleDB for Python
 
-This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Python.
+This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) and XQuery to the world of Python.
+
+RumbleDB passes 100% of applicable W3C qt3tests. It means full builtin type support, full builtin function support, etc.
 
 [See in action](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb)!
 
-The Python edition is relatively recent. In many cases, `pip install jsoniq` just works. In some other instances (e.g., another version of Spark is installed locally), it might be unstable. We welcome feedback to improve the installation experience. 
+The Python edition is relatively recent. In many cases, `pip install jsoniq` just works. We welcome feedback to improve the installation experience. 
 
-JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
+JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582) (data in real life is not fully structured!), from kilobytes to Petabytes, with very little coding effort.
 
-Spark aficionados can also pass DataFrames to JSONiq queries and take back DataFrames. This gives them an environment in which both Spark SQL and JSONiq co-exist to manipulate the data. 
+Spark aficionados can also pass Pandas DataFrames to JSONiq queries and take back DataFrames. This gives them an environment in which both Spark SQL and JSONiq co-exist to manipulate the data. 
 
-The Python edition of RumbleDB is currently a prototype (alpha) and probably unstable. We welcome bug reports and feedback.
+We welcome bug reports and feedback.
 
 ## About RumbleDB
 
 RumbleDB is a JSONiq engine that works both with very small amounts of data and very large amounts of data.
-It works with JSON, CSV, text, Parquet, etc (and soon XML).
+It works with JSON, CSV, text, Parquet, XML, etc.
 It works on your laptop as well as on any Spark cluster (AWS, company clusters, etc).
 
 It automatically detects and switches between execution modes in a way transparent to the user, bringing the convenience of data independence to the world of messy data.
@@ -30,7 +32,7 @@ A RumbleSession is a wrapper around a SparkSession that additionally makes sure 
 
 JSONiq queries are invoked with rumble.jsoniq() in a way similar to the way Spark SQL queries are invoked with spark.sql().
 
-Use `rumble.xquery()` to run queries with XQuery 3.1 as the default language. It accepts the same keyword variable bindings and returns the same `SequenceOfItems` as `rumble.jsoniq()`, while preserving the session configuration. An explicit language version declaration in the query overrides the default.
+You can also use `rumble.xquery()` to run queries with XQuery 3.1 as the default language. It accepts the same keyword variable bindings and returns the same `SequenceOfItems` as `rumble.jsoniq()`, while preserving the session configuration. An explicit language version declaration in the query overrides the default.
 
 ```python
 result = rumble.xquery("<greeting>{$name}</greeting>", name="World")
@@ -41,7 +43,7 @@ JSONiq variables can be bound to lists of JSON values (str, int, float, True, Fa
 
 It will later also be possible to read tables registered in the Hive metastore, similar to spark.sql(). Alternatively, the JSONiq query can also read many files of many different formats from many places (local drive, HTTP, S3, HDFS, ...) directly with simple builtin function calls such as json-lines(), text-file(), parquet-file(), csv-file(), etc. See [RumbleDB's documentation](https://docs.rumbledb.org/writing-jsoniq-queries-in-python).
 
-The resulting sequence of items can be retrieved as a list of JSON values, as a Pyspark DataFrame, or, for advanced users, as an RDD or with a streaming iteration over the items using the [RumbleDB Item API](https://github.com/RumbleDB/rumble/blob/master/src/main/java/org/rumbledb/api/Item.java).
+The resulting sequence of items can be retrieved as a list of JSON values, as a Pyspark DataFrame, or, for advanced users, with a streaming iteration over the items using the [RumbleDB Item API](https://github.com/RumbleDB/rumble/blob/master/src/main/java/org/rumbledb/api/Item.java).
 
 It is also possible to write the sequence of items to the local disk, to HDFS, to S3, etc in a way similar to how DataFrames are written back by Pyspark.
 
@@ -400,6 +402,10 @@ spark.stop()
 Even more queries can be found [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) and you can look at the [JSONiq documentation](https://www.jsoniq.org) and tutorials.
 
 # Latest updates
+
+## Version 3.1.0
+
+- RumbleDB 3.1.0 Pistachio Tree passes 100% of applicable tests of the qt3tests test suite for XQuery 3.1. Since JSONiq is based on XQuery 3.1, this also aligns JSONiq with the standard (in particular full support of all builtin types, all builtin functions, serialization, all expressions, etc).
 
 ## Version 3.0.3
 
