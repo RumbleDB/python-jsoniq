@@ -1,4 +1,6 @@
 from jsoniq import RumbleSession
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 import json
 import pandas as pd
@@ -11,7 +13,7 @@ class TryTesting(TestCase):
         # All attributes and methods of SparkSession are also available on RumbleSession. 
 
         rumble = RumbleSession.builder.getOrCreate();
-        rumble.getRumbleConf().setResultSizeCap(100);
+        rumble.getRumbleConf().set("runtime.resultsSizeCap", 100);
 
         # Just to improve readability when invoking Spark methods
         # (such as spark.sql() or spark.createDataFrame()).
@@ -111,7 +113,8 @@ class TryTesting(TestCase):
                 default return "?" : $v
         }
         """)
-        self.assertTrue(json.dumps(seq.json()) == json.dumps(({'even': [ 2, 4, 6 ] }, { 'odd': [ 1, 3, 5 ]},)))
+        # Without order by, the test should accept either group order.
+        self.assertCountEqual(seq.json(), ({'even': [2, 4, 6]}, {'odd': [1, 3, 5]}))
 
         rumble.bind('$c', ([1,2,3],[4,5,6]))
         seq = rumble.jsoniq("""
@@ -278,11 +281,12 @@ class TryTesting(TestCase):
         # RumbleDB was already tested with up to 64 AWS machines and 100s of TBs of data.
         # Of course the examples below are so small that it makes more sense to process the results locally with Python,
         # but this shows how GBs or TBs of data obtained from JSONiq can be written back to disk.
-        seq = rumble.jsoniq("$a.Name");
-        seq.write().mode("overwrite").json("outputjson");
-        seq.write().mode("overwrite").parquet("outputparquet");
+        with TemporaryDirectory() as output_dir:
+            seq = rumble.jsoniq("$a.Name");
+            seq.write().mode("overwrite").json((Path(output_dir) / "outputjson").as_posix());
+            seq.write().mode("overwrite").parquet((Path(output_dir) / "outputparquet").as_posix());
 
-        seq = rumble.jsoniq("1+1");
-        seq.write().mode("overwrite").text("outputtext");
+            seq = rumble.jsoniq("1+1");
+            seq.write().mode("overwrite").text((Path(output_dir) / "outputtext").as_posix());
 
         self.assertTrue(True)
