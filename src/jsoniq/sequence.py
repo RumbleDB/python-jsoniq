@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import DataFrame
 import json
 import sys
+from .errors import notebook_errors
 
 class SequenceOfItems:
     schema_str = """
@@ -32,40 +33,55 @@ For more information, see the documentation at https://docs.rumbledb.org/rumbled
         self._sparksession = rumblesession._sparksession
         self._sparkcontext = self._sparksession.sparkContext
 
+    @notebook_errors
     def items(self):
         return self.getAsList()
 
+    @notebook_errors
     def take(self, n):
         self._rumblesession.lastResult =  tuple(self.getFirstItemsAsList(n))
         return self._rumblesession.lastResult
     
+    @notebook_errors
     def first(self):
         self._rumblesession.lastResult =  tuple(self.getFirstItemsAsList(self._rumblesession.getRumbleConf().getInt("runtime.resultsSizeCap")))
         return self._rumblesession.lastResult
 
+    @notebook_errors
     def json(self):
         self._rumblesession.lastResult = tuple([json.loads(l.serializeAsJSON()) for l in self._jsequence.getAsList()])
         return self._rumblesession.lastResult
 
+    @notebook_errors
     def rdd(self):
         rdd = self._jsequence.getAsPickledStringRDD()
         rdd = RDD(rdd, self._sparkcontext)
         self._rumblesession.lastResult = rdd.map(lambda l: json.loads(l))
         return self._rumblesession.lastResult
 
+    @notebook_errors
     def df(self):
         self._rumblesession.lastResult = DataFrame(self._jsequence.getAsDataFrame(), self._sparksession)
         return self._rumblesession.lastResult
 
+    @notebook_errors
     def pdf(self):
         self._rumblesession.lastResult = self.df().toPandas()
         return self._rumblesession.lastResult
     
+    @notebook_errors
     def count(self):
         return self._jsequence.count()
     
+    @notebook_errors
     def nextJSON(self):
         return self._jsequence.next().serializeAsJSON()
 
     def __getattr__(self, item):
-        return getattr(self._jsequence, item)
+        value = getattr(self._jsequence, item)
+        if callable(value):
+            @notebook_errors
+            def call(sequence, *args, **kwargs):
+                return value(*args, **kwargs)
+            return call.__get__(self, type(self))
+        return value

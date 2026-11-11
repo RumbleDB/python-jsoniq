@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
 from py4j.java_collections import JavaList
+from .errors import notebook_errors
 from .sequence import SequenceOfItems
 from .configuration import RumbleConfiguration
 import sys
@@ -333,9 +334,11 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             self._bindings[name] = ("bindDataFrame", df._jdf)
         return self;
 
+    @notebook_errors
     def jsoniq(self, str, **kwargs):
         return self._run_query(str, self._jrumblesession, kwargs)
 
+    @notebook_errors
     def xquery(self, str, **kwargs):
         """Run a query with XQuery 3.1 as the default language."""
         builder = self._jrumblesession.getConfiguration().toBuilder()

@@ -543,3 +543,16 @@ rumble.getRumbleConf().set("debug.showErrorInfo", True)
 - Ability to write back a sequence of items to local disk, HDFS, S3... in various formats (JSON, CSV, Parquet...).
 - Automatically declare external variables bound as DataFrames to improve userfriendliness.
 - Simplified the function names to make them more intuitive (json(), items(), df(), rdd(), etc).
+
+### Error display in notebooks
+
+Java errors raised by `rumble.jsoniq(...)`, `rumble.xquery(...)`, and sequence
+accessors such as `.df()`, `.pdf()`, and `.serialize()` display just the Java
+error message in Jupyter, without a Python traceback. No notebook setup is needed.
+The failed cell still stops, and Python code can catch `jsoniq.RumbleError`
+(which also remains compatible with `Py4JJavaError` handlers).
+
+Set `rumble.getRumbleConf().set("debug.showErrorInfo", True)` to retain the
+original exception and full traceback. Outside IPython, normal Python traceback
+reporting still applies. Errors raised later by operations on returned Spark
+DataFrames or RDDs use Spark's usual error reporting.
