@@ -1,21 +1,23 @@
 # RumbleDB for Python
 
-This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) to the world of Python.
+This is the Python edition of [RumbleDB](https://rumbledb.org/), which brings [JSONiq](https://www.jsoniq.org) and XQuery to the world of Python.
+
+RumbleDB passes 100% of applicable W3C qt3tests. It means full builtin type support, full builtin function support, etc.
 
 [See in action](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb)!
 
-The Python edition is relatively recent. In many cases, `pip install jsoniq` just works. In some other instances (e.g., another version of Spark is installed locally), it might be unstable. We welcome feedback to improve the installation experience. 
+The Python edition is relatively recent. In many cases, `pip install jsoniq` just works. We welcome feedback to improve the installation experience. 
 
-JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582), from kilobytes to Petabytes, with very little coding effort.
+JSONiq is a language considerably more powerful than SQL as it can process [messy, heterogeneous datasets](https://arxiv.org/abs/1910.11582) (data in real life is not fully structured!), from kilobytes to Petabytes, with very little coding effort.
 
-Spark aficionados can also pass DataFrames to JSONiq queries and take back DataFrames. This gives them an environment in which both Spark SQL and JSONiq co-exist to manipulate the data. 
+Spark aficionados can also pass Pandas DataFrames to JSONiq queries and take back DataFrames. This gives them an environment in which both Spark SQL and JSONiq co-exist to manipulate the data. 
 
-The Python edition of RumbleDB is currently a prototype (alpha) and probably unstable. We welcome bug reports and feedback.
+We welcome bug reports and feedback.
 
 ## About RumbleDB
 
 RumbleDB is a JSONiq engine that works both with very small amounts of data and very large amounts of data.
-It works with JSON, CSV, text, Parquet, etc (and soon XML).
+It works with JSON, CSV, text, Parquet, XML, etc.
 It works on your laptop as well as on any Spark cluster (AWS, company clusters, etc).
 
 It automatically detects and switches between execution modes in a way transparent to the user, bringing the convenience of data independence to the world of messy data.
@@ -30,15 +32,29 @@ A RumbleSession is a wrapper around a SparkSession that additionally makes sure 
 
 JSONiq queries are invoked with rumble.jsoniq() in a way similar to the way Spark SQL queries are invoked with spark.sql().
 
+You can also use `rumble.xquery()` to run queries with XQuery 3.1 as the default language. It accepts the same keyword variable bindings and returns the same `SequenceOfItems` as `rumble.jsoniq()`, while preserving the session configuration. An explicit language version declaration in the query overrides the default.
+
+```python
+result = rumble.xquery("<greeting>{$name}</greeting>", name="World")
+print(result.serialize())  # XML declaration followed by <greeting>World</greeting>
+```
+
 JSONiq variables can be bound to lists of JSON values (str, int, float, True, False, None, dict, list) or to Pyspark DataFrames. A JSONiq query can use as many variables as needed (for example, it can join between different collections).
 
 It will later also be possible to read tables registered in the Hive metastore, similar to spark.sql(). Alternatively, the JSONiq query can also read many files of many different formats from many places (local drive, HTTP, S3, HDFS, ...) directly with simple builtin function calls such as json-lines(), text-file(), parquet-file(), csv-file(), etc. See [RumbleDB's documentation](https://docs.rumbledb.org/writing-jsoniq-queries-in-python).
 
-The resulting sequence of items can be retrieved as a list of JSON values, as a Pyspark DataFrame, or, for advanced users, as an RDD or with a streaming iteration over the items using the [RumbleDB Item API](https://github.com/RumbleDB/rumble/blob/master/src/main/java/org/rumbledb/api/Item.java).
+The resulting sequence of items can be retrieved as a list of JSON values, as a Pyspark DataFrame, or, for advanced users, with a streaming iteration over the items using the [RumbleDB Item API](https://github.com/RumbleDB/rumble/blob/master/src/main/java/org/rumbledb/api/Item.java).
 
 It is also possible to write the sequence of items to the local disk, to HDFS, to S3, etc in a way similar to how DataFrames are written back by Pyspark.
 
-The library also contains a jsoniq magic that allows you to directly write JSONiq queries in a Jupyter notebook and see the results automatically output on the screen.
+The library also contains a jsoniq magic that allows you to directly write JSONiq queries in a Jupyter notebook and see the results automatically output on the screen. In notebooks, you can use `%%jsoniq -s` (or `--serialize`) to serialize the result sequence to text output, according to the XSLT and XQuery Serialization 3.1 specification by W3C. The method and serialization options can all be specified in the query with option declarations, following the XQuery/JSONiq standard. `%%jsoniq -j` shows the results in JSON lines format, while `%%jsoniq -pdf` shows a pandas data frame, and `%%jsoniq -df` shows a Spark data frame.
+
+The same notebook extension also registers `%%xquery`, which calls `rumble.xquery()` and defaults to serialized output (`-s`) with the XML serialization method. Query option declarations in the `http://www.w3.org/2010/xslt-xquery-serialization` namespace can override the serialization method. It accepts the same options: use `-j`, `-df`, or `-pdf` to select another output format, `-u` to apply updates, and `-t` to show execution time.
+
+```xquery
+%%xquery
+<greeting>Hello, world!</greeting>
+```
 
 The design goal is that it is possible to chain DataFrames between JSONiq and Spark SQL queries seamlessly. For example, JSONiq can be used to clean up very messy data and turn it into a clean DataFrame, which can then be processed with Spark SQL, spark.ml, etc.
 
@@ -74,6 +90,14 @@ pip install jsoniq
 
 *Important note*: since the jsoniq package depends on pyspark 4, Java 17 or Java 21 is a requirement. If another version of Java is installed, the execution of a Python program attempting to create a RumbleSession will lead to an error message on stderr that contains explanations.
 
+By default, session creation uses Spark bundled with PySpark. Both `getOrCreate()` and `create()` temporarily unset `SPARK_HOME` and restore its original value (or absence) after startup, even if startup fails. To use an external Spark installation configured through `SPARK_HOME`, opt out before creating the session:
+
+```python
+rumble = RumbleSession.builder.withBundledSpark(False).getOrCreate()
+```
+
+Use `withBundledSpark()` or `withBundledSpark(True)` to enable the default again. This setting cannot change the Spark installation of an existing session or JVM. Startup calls through this library are serialized while the environment is changed; unrelated threads should avoid changing `SPARK_HOME` or starting Spark at the same time.
+
 ## Sample code
 
 We will make more documentation available as we go. In the meantime, you will find a sample, commented code below that should just run
@@ -81,15 +105,27 @@ after installing the library.
 
 You can directly copy paste the code below to a Python file and execute it with Python.
 
-```
+```python
 from jsoniq import RumbleSession
 import pandas as pd
 
 # The syntax to start a session is similar to that of Spark.
 # A RumbleSession is a SparkSession that additionally knows about RumbleDB.
-# All attributes and methods of SparkSession are also available on RumbleSession. 
+# SparkSession methods such as createDataFrame() and sql() are also available on RumbleSession.
 
-rumble = RumbleSession.builder.getOrCreate();
+# rumbleConfig() applies Rumble settings before startup messages, or to a reused session.
+# config() remains available for Spark settings.
+rumble = (
+    RumbleSession.builder
+    .rumbleConfig("debug.showErrorInfo", True)
+    .getOrCreate()
+)
+
+# Configure subsequent queries using RumbleDB 3.0's dot-separated paths.
+# The result size cap controls first() and notebook display; json() uses the materialization cap.
+rumble.getRumbleConf().set("runtime.resultsSizeCap", 100)
+rumble.getRumbleConf().set("runtime.materializationCap", 100000)
+print(rumble.getRumbleConf().getInt("runtime.resultsSizeCap"))
 
 # Just to improve readability when invoking Spark methods
 # (such as spark.sql() or spark.createDataFrame()).
@@ -105,12 +141,16 @@ spark = rumble
 # of items, here the sequence with just the integer item 2.
 items = rumble.jsoniq('1+1')
 
-# A sequence of items can simply be converted to a list of Python/JSON values with json().
-# Since there is only one value in the sequence output by this query,
-# we get a singleton list with the integer 2.
-# Generally though, the results may contain zero, one, two, or more items.
-python_list = items.json()
-print(python_list)
+# json() collects the complete result as a tuple of native Python values.
+# Here the result is (2,). JSON arrays become lists and JSON objects become dicts.
+# Collection is subject to runtime.materializationCap.
+python_values = items.json()
+print(python_values)
+
+# take(n) and first() return Java Item objects, not native Python values.
+# first() uses runtime.resultsSizeCap; take(n) uses the requested count.
+print([item.serializeAsJSON() for item in rumble.jsoniq("1 to 5").take(2)])
+print([item.serializeAsJSON() for item in rumble.jsoniq("1 to 5").first()])
 
 ############################################
 ##### More complex, standalone queries #####
@@ -147,9 +187,9 @@ let $join :=
     "sold" : $sale.product
   }
 return [$join]
-""");
+""")
 
-print(seq.json());
+print(seq.json())
 
 seq = rumble.jsoniq("""
 for $product in json-lines("http://rumbledb.org/samples/products-small.json", 10)
@@ -159,8 +199,8 @@ return {
     "store" : $store-number,
     "products" : [ distinct-values($product.product) ]
 }
-""");
-print(seq.json());
+""")
+print(seq.json())
 
 ############################################################
 ###### Binding JSONiq variables to Python values ###########
@@ -168,17 +208,19 @@ print(seq.json());
 
 # It is possible to bind a JSONiq variable to a tuple of native Python values
 # and then use it in a query.
-# JSONiq, variables are bound to sequences of items, just like the results of JSONiq
-# queries are sequence of items.
+# In JSONiq, variables and query results are sequences of items.
 # A Python tuple will be seamlessly converted to a sequence of items by the library.
-# Currently we only support strs, ints, floats, booleans, None, lists, and dicts.
-# But if you need more (like date, bytes, etc) we will add them without any problem.
-# JSONiq has a rich type system.
- 
+# Python generators are consumed into tuples and bound as sequences of items too.
+# Generators must be finite; their contents are materialized in memory when bound.
+# Scalars can be strings, ints, floats, booleans, None, or dicts.
+# Lists represent array items: wrap a list in a singleton tuple to bind one array.
+# Keyword bindings apply only to this query; they do not persist on the session.
+
 print(rumble.jsoniq("""
 for $v in $c
 let $parity := $v mod 2
 group by $parity
+order by $parity
 return { switch($parity)
          case 0 return "even"
          case 1 return "odd"
@@ -196,12 +238,21 @@ return [
 
 print(rumble.jsoniq('{ "results" : $c.foo[[2]] }', c=({"foo":[1,2,3]},{"foo":[4,{"bar":[1,False, None]},6]})).json())
 
-# It is possible to bind only one value. The it must be provided as a singleton tuple.
-# This is because in JSONiq, an item is the same a sequence of one item.
+# A singleton tuple binds a sequence containing one item.
 print(rumble.jsoniq('for $i in 1 to $c return $i*$i', c=(42,)).json())
 
-# For convenience and code readability, you can also use bindOne().
+# A scalar keyword argument also binds one item, without requiring a tuple.
 print(rumble.jsoniq('for $i in 1 to $c return $i*$i', c=42).json())
+
+# Use bind() or bindOne() for a binding shared by subsequent queries.
+# A keyword argument temporarily overrides it; unbind() removes it.
+rumble.bindOne("$limit", 3)
+try:
+    print(rumble.jsoniq("1 to $limit").json())           # (1, 2, 3)
+    print(rumble.jsoniq("1 to $limit", limit=2).json())  # (1, 2)
+    print(rumble.jsoniq("1 to $limit").json())           # (1, 2, 3)
+finally:
+    rumble.unbind("$limit")
 
 ##########################################################
 ##### Binding JSONiq variables to pandas DataFrames ######
@@ -210,8 +261,8 @@ print(rumble.jsoniq('for $i in 1 to $c return $i*$i', c=42).json())
 
 # Creating a dummy pandas dataframe
 data = {'Name': ['Alice', 'Bob', 'Charlie'],
-        'Age': [30,25,35]};
-pdf = pd.DataFrame(data);
+        'Age': [30,25,35]}
+pdf = pd.DataFrame(data)
 
 # Binding a pandas dataframe
 seq = rumble.jsoniq('$a.Name', a=pdf)
@@ -231,22 +282,23 @@ print(seq.pdf())
 # DataFrame as a sequence of object items.
 
 # Create a data frame also similar to Spark (but using the rumble object).
-data = [("Alice", 30), ("Bob", 25), ("Charlie", 35)];
-columns = ["Name", "Age"];
-df = spark.createDataFrame(data, columns);
+data = [("Alice", 30), ("Bob", 25), ("Charlie", 35)]
+columns = ["Name", "Age"]
+df = spark.createDataFrame(data, columns)
 
 # You can bind JSONiq variables to pyspark DataFrames as follows. You can bind as many variables as you want.
 # Since variable $a is bound to a DataFrame, it is automatically declared as an external variable
 # and can be used in the query. In JSONiq, it is logically a sequence of objects.
-res = rumble.jsoniq('$a.Name', a=df);
+res = rumble.jsoniq('$a.Name', a=df)
 
 # There are several ways to collect the outputs, depending on the user needs but also
 # on the query supplied.
 # This returns a list containing one or several of "DataFrame", "RDD", "PUL", "Local"
 # If DataFrame is in the list, df() can be invoked.
 # If RDD is in the list, rdd() can be invoked.
-# If Local is the list, items() or json() can be invokved, as well as the local iterator API.
-modes = res.availableOutputs();
+# If Local is in the list, items(), json(), and the local iterator API are available.
+# If PUL is in the list, applyPUL() can apply the pending updates.
+modes = res.availableOutputs()
 for mode in modes:
     print(mode)
 
@@ -256,29 +308,33 @@ for mode in modes:
 
 # If the output of the JSONiq query is structured (i.e., RumbleDB was able to detect a schema),
 # then we can extract a regular data frame that can be further processed with spark.sql() or rumble.jsoniq().
-df = res.df();
-df.show();
+df = res.df()
+df.show()
 
 # We are continuously working on the detection of schemas and RumbleDB will get better at it with them.
 # JSONiq is a very powerful language and can also produce heterogeneous output "by design". Then you need
-# to use rdd() instead of df(), or to collect the list of JSON values (see further down). Remember
+# to use rdd() instead of df(), or to collect the tuple of native Python values (see further down). Remember
 # that availableOutputs() tells you what is at your disposal.
 
 # A DataFrame output by JSONiq can be reused as input to a Spark SQL query.
 # (Remember that rumble is a wrapper around a SparkSession object, so you can use rumble.sql() just like spark.sql())
-df.createTempView("myview")
-df2 = spark.sql("SELECT * FROM myview").toDF("name");
-df2.show();
+df.createOrReplaceTempView("myview")
+df2 = spark.sql("SELECT * FROM myview").toDF("name")
+df2.show()
 
 # A DataFrame output by Spark SQL can be reused as input to a JSONiq query.
-seq2 = rumble.jsoniq("for $i in 1 to 5 return $b", b=df2);
-df3 = seq2.df();
-df3.show();
+seq2 = rumble.jsoniq("for $i in 1 to 5 return $b", b=df2)
+df3 = seq2.df()
+df3.show()
 
 # And a DataFrame output by JSONiq can be reused as input to another JSONiq query.
-seq3 = rumble.jsoniq("$b[position() lt 3]", b=df3);
-df4 = seq3.df();
-df4.show();
+seq3 = rumble.jsoniq("$b[position() lt 3]", b=df3)
+df4 = seq3.df()
+df4.show()
+
+# A SequenceOfItems result can also be bound directly, preserving DataFrame execution
+# when available. No explicit conversion with df() is needed.
+print(rumble.jsoniq("$rows.name", rows=seq3).json())
 
 #########################
 ##### Local access ######
@@ -286,36 +342,40 @@ df4.show();
 
 # This materializes the rows as items.
 # The items are accessed with the RumbleDB Item API.
-list = res.items();
-for result in list:
+java_items = res.items()
+for result in java_items:
     print(result.getStringValue())
 
 # This streams through the items one by one
-res.open();
-while (res.hasNext()):
-    print(res.next().getStringValue());
-res.close();
+res.open()
+try:
+    while res.hasNext():
+        print(res.next().getStringValue())
+finally:
+    res.close()
 
 ################################################################################################################
 ###### Native Python/JSON Access for bypassing the Item API (but losing on the richer JSONiq type system) ######
 ################################################################################################################
 
-# This method directly gets the result as JSON (dict, list, strings, ints, etc).
-jlist = res.json();
-for str in jlist:
-    print(str);
+# This returns a tuple of native Python values (dicts, lists, strings, ints, etc.).
+python_values = res.json()
+for value in python_values:
+    print(value)
 
-# This streams through the JSON values one by one.
-res.open();
-while(res.hasNext()):
-    print(res.nextJSON());
-res.close();
+# nextJSON() returns each item as a serialized JSON string.
+res.open()
+try:
+    while res.hasNext():
+        print(res.nextJSON())
+finally:
+    res.close()
 
 # This gets an RDD of JSON values that can be processed by Python
-rdd = res.rdd();
-print(rdd.count());
-for str in rdd.take(10):
-    print(str);
+rdd = res.rdd()
+print(rdd.count())
+for value in rdd.take(10):
+    print(value)
 
 ###################################################
 ###### Write back to the disk (or data lake) ######
@@ -326,12 +386,15 @@ for str in rdd.take(10):
 # RumbleDB was already tested with up to 64 AWS machines and 100s of TBs of data.
 # Of course the examples below are so small that it makes more sense to process the results locally with Python,
 # but this shows how GBs or TBs of data obtained from JSONiq can be written back to disk.
-seq = rumble.jsoniq("$a.Name", a=spark.createDataFrame(data, columns));
-seq.write().mode("overwrite").json("outputjson");
-seq.write().mode("overwrite").parquet("outputparquet");
+seq = rumble.jsoniq("$a.Name", a=spark.createDataFrame(data, columns))
+# Select the format before setting the mode, so it applies to the final writer.
+seq.write().format("json").mode("overwrite").save("outputjson")
+seq.write().format("parquet").mode("overwrite").save("outputparquet")
 
-seq = rumble.jsoniq("1+1");
-seq.write().mode("overwrite").text("outputtext");
+seq = rumble.jsoniq("1+1")
+seq.write().format("xml-json-hybrid").mode("overwrite").save("outputtext")
+
+spark.stop()
 
 ```
 # How to learn JSONiq, and more query examples
@@ -339,6 +402,31 @@ seq.write().mode("overwrite").text("outputtext");
 Even more queries can be found [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) and you can look at the [JSONiq documentation](https://www.jsoniq.org) and tutorials.
 
 # Latest updates
+
+## Version 3.1.0
+
+- RumbleDB 3.1.0 Pistachio Tree passes 100% of applicable tests of the qt3tests test suite for XQuery 3.1. Since JSONiq is based on XQuery 3.1, this also aligns JSONiq with the standard (in particular full support of all builtin types, all builtin functions, serialization, all expressions, etc).
+
+## Version 3.0.3
+
+- Mainly bugfixes and increased compliance with the W3C standard, and improvements related to the language server.
+
+## Version 3.0.2
+- Upgraded to RumbleDB 3.0.0 and its immutable configuration and external bindings APIs.
+- There is a breaking change in how configuration parameters are set. New:
+```python
+rumble.getRumbleConf().set("runtime.resultsSizeCap", 100)
+rumble.getRumbleConf().set("runtime.materializationCap", 100000)
+rumble.getRumbleConf().set("debug.showErrorInfo", True)
+```
+- Calling old configuration functions leads to a message explaining the new syntax. Configuration changes apply to subsequent queries; existing sequences retain their compilation settings.
+- Fixed object conversion and binding query results as DataFrames. Keyword bindings are scoped to a query and restore persistent bindings even when query compilation fails.
+- New rumble.xquery() call and %%xquery magic.
+- In the %%jsoniq magic, the new -s parameter outputs the results as a single string following the W3C Serialization 3.1 specification. If using `rumble.xquery()` or `rumble.jsoniq()` call, the same can be achieved by chaining a `.serialize() ` call returning a string.  All standard serialization methods (xml, json, xhtml, html, text, adaptive) are available. For %%xquery, this is the default behavior.
+- By default, the Spark bundled with pyspark is used. Use .withBundledSpark(False) when creating the session to use a different spark installation that SPARK_HOME points to (for advanced users only).
+
+## Version 2.1.9
+- Fixed a bug in the inferred conversion to DataFrames of output involving arrays of objects.
 
 ## Version 2.1.8
 - The order of the columns in output DataFrames were occasionally reshuffled. This new version keeps the column order more stable.
@@ -455,4 +543,3 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 - Ability to write back a sequence of items to local disk, HDFS, S3... in various formats (JSON, CSV, Parquet...).
 - Automatically declare external variables bound as DataFrames to improve userfriendliness.
 - Simplified the function names to make them more intuitive (json(), items(), df(), rdd(), etc).
-
