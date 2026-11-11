@@ -27,14 +27,13 @@ def test_magic_prints_serialized_sequence_directly(option, serialized, capsys):
     assert capsys.readouterr().out == serialized + "\n"
 
 
-def test_magic_reports_serialization_errors(capsys):
+def test_magic_preserves_python_serialization_errors():
     session = Mock()
     session.jsoniq.return_value.serialize.side_effect = RuntimeError("Serialization failed")
 
     with patch.object(RumbleSession.Builder, "getOrCreate", return_value=session):
-        JSONiqMagic().jsoniq("-s", "1 to 3")
-
-    assert "Serialization failed" in capsys.readouterr().out
+        with pytest.raises(RuntimeError, match="Serialization failed"):
+            JSONiqMagic().jsoniq("-s", "1 to 3")
 
 
 def test_magic_serialization_preserves_timing(capsys):

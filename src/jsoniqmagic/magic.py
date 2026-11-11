@@ -4,7 +4,7 @@ from IPython.core.magic_arguments import (
 )
 import time, json
 from jsoniq.session import RumbleSession
-from py4j.protocol import Py4JJavaError
+from jsoniq.errors import notebook_error_context
 
 @magics_class
 class JSONiqMagic(Magics):
@@ -39,153 +39,39 @@ class JSONiqMagic(Magics):
         ):
             args.serialize = True
         start = time.time()
-        try:
-            rumble = RumbleSession.builder.getOrCreate();
-            response = getattr(rumble, language)(data);
-        except Py4JJavaError as e:
-            print(e.java_exception.getMessage())
-            return
-        except Exception as e:
-            print("Query unsuccessful.")
-            print("Usual reasons: firewall, misconfigured proxy.")
-            print("Error message:")
-            print(e.args[0])
-            return
-        except:
-            print("Query unsuccessful.")
-            print("Usual reasons: firewall, misconfigured proxy.")
-            return
+        rumble = RumbleSession.builder.getOrCreate();
+        with notebook_error_context(rumble):
+            return self._execute(rumble, language, data, args, start)
+
+    def _execute(self, rumble, language, data, args, start):
+        response = getattr(rumble, language)(data);
 
         if args.serialize:
-            try:
-                serialized = response.serialize()
-            except Py4JJavaError as e:
-                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo"):
-                    raise
-                print(e.java_exception.getMessage())
-                return
-            except Exception as e:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                print("Error message:")
-                print(e.args[0])
-                return
-            except:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                return
+            serialized = response.serialize()
             print(serialized)
             if args.timed:
                 print("Response time: %s ms" % (time.time() - start))
             return
 
-        schema_str = """
-No DataFrame available as no schema was detected. If you still believe the output is structured enough, you could add a schema and validate expression explicitly to your query.
-
-This is an example of how you can simply define a schema and wrap your query in a validate expression:
-
-declare type mytype as {
-    "product" : "string",
-    "store-number" : "int",
-    "quantity" : "decimal"
-};
-validate type mytype* { 
-    for $product in json-lines("http://rumbledb.org/samples/products-small.json", 10)
-    where $product.quantity ge 995
-    return $product
-}
-"""
-
         if(args.pyspark_data_frame):
-            try:
-                df = response.df();
-            except Py4JJavaError as e:
-                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
-                    raise e;
-                else:
-                    print(e.java_exception.getMessage())
-                return
-            except Exception as e:
-                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
-                    raise e;
-                else:
-                    print("Query unsuccessful.")
-                    print("Usual reasons: firewall, misconfigured proxy.")
-                    print("Error message:")
-                    print(e.args[0])
-                    return
-            except:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                return
+            df = response.df();
             if df is not None:
                 df.show()
 
         if (args.pandas_data_frame):
-            try:
-                pdf = response.pdf()
-            except Py4JJavaError as e:
-                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
-                    raise e;
-                else:
-                    print(e.java_exception.getMessage())
-                return
-            except Exception as e:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                print("Error message:")
-                print(e.args[0])
-                return
-            except:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                return
+            pdf = response.pdf()
             if pdf is not None:
                 return pdf
 
         if (args.apply_updates):
             if ("PUL" in response.availableOutputs()):
-                try:
-                    response.applyPUL()
-                except Py4JJavaError as e:
-                    if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
-                        raise e;
-                    else:
-                        print(e.java_exception.getMessage())
-                    return
-                except Exception as e:
-                    print("Query unsuccessful.")
-                    print("Usual reasons: firewall, misconfigured proxy.")
-                    print("Error message:")
-                    print(e.args[0])
-                    return
-                except:
-                    print("Query unsuccessful.")
-                    print("Usual reasons: firewall, misconfigured proxy.")
-                    return  
+                response.applyPUL()
                 print("Updates applied successfully.")
             else:
                 print("No Pending Update List (PUL) available to apply.")
         
         if (args.json or (not args.pandas_data_frame and not args.pyspark_data_frame)):
-            try:
-                capplusone = response.take(rumble.getRumbleConf().getInt("runtime.resultsSizeCap") + 1)
-            except Py4JJavaError as e:
-                if rumble.getRumbleConf().getBoolean("debug.showErrorInfo") :
-                    raise e;
-                else:
-                    print(e.java_exception.getMessage())
-                return
-            except Exception as e:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                print("Error message:")
-                print(e.args[0])
-                return
-            except:
-                print("Query unsuccessful.")
-                print("Usual reasons: firewall, misconfigured proxy.")
-                return  
+            capplusone = response.take(rumble.getRumbleConf().getInt("runtime.resultsSizeCap") + 1)
             if len(capplusone) > rumble.getRumbleConf().getInt("runtime.resultsSizeCap"):
                 count = response.count()
                 print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getInt("runtime.resultsSizeCap")))
