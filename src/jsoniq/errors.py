@@ -1,5 +1,6 @@
 """Notebook-friendly Java errors that retain normal exception semantics."""
 
+from contextlib import contextmanager
 from functools import wraps
 
 from py4j.protocol import Py4JJavaError
@@ -23,18 +24,25 @@ class RumbleError(Py4JJavaError):
         return str(self).splitlines()
 
 
+@contextmanager
+def notebook_error_context(session):
+    """Apply the same error policy to an entire query execution block."""
+    try:
+        yield
+    except RumbleError:
+        raise
+    except Py4JJavaError as error:
+        if session.getRumbleConf().getBoolean("debug.showErrorInfo"):
+            raise
+        raise RumbleError(error) from error
+
+
 def notebook_errors(method):
     """Translate Java errors unless full debugging output was requested."""
     @wraps(method)
     def wrapped(self, *args, **kwargs):
-        try:
+        session = self.__dict__.get("_rumblesession", self)
+        with notebook_error_context(session):
             return method(self, *args, **kwargs)
-        except RumbleError:
-            raise
-        except Py4JJavaError as error:
-            session = self.__dict__.get("_rumblesession", self)
-            if session.getRumbleConf().getBoolean("debug.showErrorInfo"):
-                raise
-            raise RumbleError(error) from error
 
     return wrapped

@@ -69,3 +69,54 @@ def test_non_java_errors_are_unchanged():
     java_sequence.getAsDataFrame.side_effect = ValueError("Python failure")
     with pytest.raises(ValueError, match="Python failure"):
         SequenceOfItems(java_sequence, session).df()
+
+
+@pytest.mark.parametrize("language", ["jsoniq", "xquery"])
+@pytest.mark.parametrize("debug", [False, True])
+@pytest.mark.parametrize("stage,option", [
+    ("query", "-j"), ("serialize", "-s"), ("df", "-df"),
+    ("show", "-df"), ("pdf", "-pdf"), ("availableOutputs", "-u"),
+    ("applyPUL", "-u"), ("take", "-j"), ("count", "-j"),
+    ("serializeAsJSON", "-j"),
+])
+def test_magic_uses_shared_error_policy(language, debug, stage, option):
+    pytest.importorskip("IPython")
+    from unittest.mock import patch
+    from jsoniqmagic import JSONiqMagic
+
+    session, error = setup_error(debug)
+    response = getattr(session, language).return_value
+    session.getRumbleConf.return_value.getInt.return_value = 1
+    response.availableOutputs.return_value = ["PUL"]
+    item = Mock()
+    response.take.return_value = [item, item]
+    if stage == "query":
+        target = getattr(session, language)
+    elif stage == "show":
+        target = response.df.return_value.show
+    elif stage == "serializeAsJSON":
+        target = item.serializeAsJSON
+        response.take.return_value = [item]
+    else:
+        target = getattr(response, stage)
+    target.side_effect = error
+    with patch.object(RumbleSession.Builder, "getOrCreate", return_value=session):
+        with pytest.raises(Py4JJavaError) as caught:
+            getattr(JSONiqMagic(), language)(option, "query")
+    if debug:
+        assert caught.value is error
+    else:
+        assert isinstance(caught.value, RumbleError)
+        assert str(caught.value) == error.java_exception.getMessage()
+
+
+def test_nested_error_handlers_preserve_translated_error():
+    from jsoniq.errors import notebook_error_context
+
+    session, error = setup_error()
+    translated = RumbleError(error)
+    with pytest.raises(RumbleError) as caught:
+        with notebook_error_context(session):
+            raise translated
+    assert caught.value is translated
+    session.getRumbleConf.assert_not_called()
