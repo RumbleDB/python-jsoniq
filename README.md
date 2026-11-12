@@ -403,6 +403,10 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 3.1.1
+
+- Improve display of errors: the full Python stacktrace is no longer shown except if debug mode is activated.+- More efficient execution for checking the result size: the count is no longer shown, which avoids evaluating the query twice.
+
 ## Version 3.1.0
 
 - RumbleDB 3.1.0 Pistachio Tree passes 100% of applicable tests of the qt3tests test suite for XQuery 3.1. Since JSONiq is based on XQuery 3.1, this also aligns JSONiq with the standard (in particular full support of all builtin types, all builtin functions, serialization, all expressions, etc).
