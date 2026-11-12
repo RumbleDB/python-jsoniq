@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from decimal import Decimal
+from numbers import Integral
 from unittest import TestCase
 
 from jsoniq import RumbleSession
@@ -47,6 +48,14 @@ class TestPdfMaterialization(TestCase):
             self.assertIsInstance(x, Decimal)
         self.assertEqual(values, expected)
 
+    def _assert_integers(self, values, expected):
+        # Accept Python and NumPy integers, but reject floats and Decimals.
+        values = list(values)
+        for value in values:
+            self.assertIsInstance(value, Integral)
+            self.assertNotIsInstance(value, bool)
+        self.assertEqual(values, expected)
+
     def _assert_json_strings(self, series, expected):
         # the column holds serialized JSON strings; whitespaces are ignored.
         for x in series:
@@ -61,27 +70,26 @@ class TestPdfMaterialization(TestCase):
             pdf = self._assert_pdf(
                 'for $i in 1 to 3 return {"a":$i,"b":"x"}',
                 (3, 2),
-                {"a": "object", "b": "object"},
+                {"a": "int32", "b": "object"},
             )
-            # integers produced by a range surface as Decimal; strings are kept
-            self._assert_decimals(
-                pdf["a"], [Decimal("1"), Decimal("2"), Decimal("3")]
-            )
+            # integer ranges use native int columns; strings are kept
+            self._assert_integers(pdf["a"], [1, 2, 3])
             self.assertEqual(list(pdf["b"]), ["x", "x", "x"])
 
         with self.subTest("nested object"):
             pdf = self._assert_pdf(
                 'for $i in 1 to 3 return {"a":$i,"o":{"p":$i,"q":"y"}}',
                 (3, 2),
-                {"a": "object", "o": "object"},
+                {"a": "int32", "o": "object"},
             )
             # a homogeneous nested object is kept as a struct (Row)
+            self._assert_integers([r["p"] for r in pdf["o"]], [1, 2, 3])
             self.assertEqual(
                 [r.asDict() for r in pdf["o"]],
                 [
-                    {"p": Decimal("1"), "q": "y"},
-                    {"p": Decimal("2"), "q": "y"},
-                    {"p": Decimal("3"), "q": "y"},
+                    {"p": 1, "q": "y"},
+                    {"p": 2, "q": "y"},
+                    {"p": 3, "q": "y"},
                 ],
             )
 
@@ -89,13 +97,11 @@ class TestPdfMaterialization(TestCase):
             pdf = self._assert_pdf(
                 'for $i in 1 to 3 return {"a":$i,"arr":[1,2,3]}',
                 (3, 2),
-                {"a": "object", "arr": "object"},
+                {"a": "int32", "arr": "object"},
             )
             # a homogeneous array is kept as a list
             for arr in pdf["arr"]:
-                self._assert_decimals(
-                    arr, [Decimal("1"), Decimal("2"), Decimal("3")]
-                )
+                self._assert_integers(arr, [1, 2, 3])
 
         with self.subTest("deep nesting"):
             pdf = self._assert_pdf(
@@ -103,11 +109,12 @@ class TestPdfMaterialization(TestCase):
                 (2, 1),
                 {"l1": "object"},
             )
+            self._assert_integers([r["l2"]["l3"]["v"] for r in pdf["l1"]], [1, 2])
             self.assertEqual(
                 [r.asDict(recursive=True) for r in pdf["l1"]],
                 [
-                    {"l2": {"l3": {"v": Decimal("1")}}},
-                    {"l2": {"l3": {"v": Decimal("2")}}},
+                    {"l2": {"l3": {"v": 1}}},
+                    {"l2": {"l3": {"v": 2}}},
                 ],
             )
 
@@ -138,9 +145,9 @@ class TestPdfMaterialization(TestCase):
             pdf = self._assert_pdf(
                 '({"a":1,"b":null},{"a":2,"b":null})',
                 (2, 2),
-                {"a": "object", "b": "object"},
+                {"a": "int32", "b": "object"},
             )
-            self._assert_decimals(pdf["a"], [Decimal("1"), Decimal("2")])
+            self._assert_integers(pdf["a"], [1, 2])
             self.assertEqual(list(pdf["b"]), [None, None])
 
         with self.subTest("null, absent, and value"):
@@ -218,11 +225,9 @@ class TestPdfMaterialization(TestCase):
             pdf = self._assert_pdf(
                 '({"n":9223372036854775807},{"n":1})',
                 (2, 1),
-                {"n": "object"},
+                {"n": "int64"},
             )
-            self._assert_decimals(
-                pdf["n"], [Decimal("9223372036854775807"), Decimal("1")]
-            )
+            self._assert_integers(pdf["n"], [9223372036854775807, 1])
 
         with self.subTest("beyond long range"):
             pdf = self._assert_pdf(
@@ -366,21 +371,19 @@ class TestPdfMaterialization(TestCase):
             pdf = self._assert_pdf(
                 '{"a":1,"b":2}',
                 (1, 2),
-                {"a": "object", "b": "object"},
+                {"a": "int32", "b": "int32"},
             )
-            self._assert_decimals(pdf["a"], [Decimal("1")])
-            self._assert_decimals(pdf["b"], [Decimal("2")])
+            self._assert_integers(pdf["a"], [1])
+            self._assert_integers(pdf["b"], [2])
 
         with self.subTest("bare atomics"):
             pdf = self._assert_pdf(
                 "(1,2,3)",
                 (3, 1),
-                {"__value": "object"},
+                {"__value": "int32"},
             )
             # bare atomics are materialized under a synthetic "__value" column
-            self._assert_decimals(
-                pdf["__value"], [Decimal("1"), Decimal("2"), Decimal("3")]
-            )
+            self._assert_integers(pdf["__value"], [1, 2, 3])
 
         with self.subTest("mixed bare atomics"):
             pdf = self._assert_pdf(
