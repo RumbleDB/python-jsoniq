@@ -392,7 +392,7 @@ seq.write().format("json").mode("overwrite").save("outputjson")
 seq.write().format("parquet").mode("overwrite").save("outputparquet")
 
 seq = rumble.jsoniq("1+1")
-seq.write().format("xml-json-hybrid").mode("overwrite").save("outputtext")
+seq.write().format("serialize-each-item").mode("overwrite").save("outputtext")
 
 spark.stop()
 
