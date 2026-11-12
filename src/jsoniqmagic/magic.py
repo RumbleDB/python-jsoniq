@@ -73,8 +73,7 @@ class JSONiqMagic(Magics):
         if (args.json or (not args.pandas_data_frame and not args.pyspark_data_frame)):
             capplusone = response.take(rumble.getRumbleConf().getInt("runtime.resultsSizeCap") + 1)
             if len(capplusone) > rumble.getRumbleConf().getInt("runtime.resultsSizeCap"):
-                count = response.count()
-                print("The query output %s items, which is too many to display. Displaying the first %s items:" % (count, rumble.getRumbleConf().getInt("runtime.resultsSizeCap")))
+                print("The query output too many items to display. Displaying the first %s items:" % (rumble.getRumbleConf().getInt("runtime.resultsSizeCap")))
             for e in capplusone[:rumble.getRumbleConf().getInt("runtime.resultsSizeCap")]:
                 print(json.dumps(json.loads(e.serializeAsJSON()), indent=2))
 
