@@ -403,6 +403,9 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 # Latest updates
 
+## Version 3.1.2
+- Fix detection of dataframes with nullable numeric types.
+
 ## Version 3.1.1
 
 - Improve display of errors: the full Python stacktrace is no longer shown except if debug mode is activated.
