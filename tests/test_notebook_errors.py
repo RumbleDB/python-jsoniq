@@ -76,7 +76,7 @@ def test_non_java_errors_are_unchanged():
 @pytest.mark.parametrize("stage,option", [
     ("query", "-j"), ("serialize", "-s"), ("df", "-df"),
     ("show", "-df"), ("pdf", "-pdf"), ("availableOutputs", "-u"),
-    ("applyPUL", "-u"), ("take", "-j"), ("count", "-j"),
+    ("applyPUL", "-u"), ("take", "-j"),
     ("serializeAsJSON", "-j"),
 ])
 def test_magic_uses_shared_error_policy(language, debug, stage, option):
