@@ -405,7 +405,8 @@ Even more queries can be found [here](https://colab.research.google.com/github/R
 
 ## Version 3.1.1
 
-- Improve display of errors: the full Python stacktrace is no longer shown except if debug mode is activated.+- More efficient execution for checking the result size: the count is no longer shown, which avoids evaluating the query twice.
+- Improve display of errors: the full Python stacktrace is no longer shown except if debug mode is activated.
+- More efficient execution for checking the result size: the count is no longer shown, which avoids evaluating the query twice.
 
 ## Version 3.1.0
 
