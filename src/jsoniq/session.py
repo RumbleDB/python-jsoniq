@@ -91,6 +91,7 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
             self._appendable_keys = {
                 "spark.jars.packages",
                 "spark.sql.extensions",
+                "spark.kryo.registrator",
             }
 
         def rumbleConfig(self, path, value):
@@ -226,6 +227,45 @@ class RumbleSession(object, metaclass=MetaRumbleSession):
                     .config(f"spark.sql.catalog.{catalog_name}.warehouse", warehouse)
             self._sparkbuilder = self._sparkbuilder \
                 .config("spark.sql.iceberg.check-ordering", "false")
+            return self;
+
+        def withHudi(self):
+            """
+            Configure Apache Hudi on the session catalog (spark_catalog).
+
+            - Hudi works like Delta. Its HoodieCatalog wraps the session
+              catalog, so named catalogs are not supported. Tables are named <table> or
+              <database>.<table> (the default database is "default").
+            - Because it takes over spark_catalog, it cannot be combined with withDelta() or
+              with withIceberg() without catalog names. withIceberg([...]) with named catalogs
+              can be combined with it.
+            - Managed tables are stored under ./hudi-warehouse/<database>.db/<table>.
+            - Hudi needs the Kryo serializer, both Rumble's and Hudi's registrators are set.
+            - These are the default settings, which can be overridden with config() if needed.
+            """
+            hudi_catalog = "org.apache.spark.sql.hudi.catalog.HoodieCatalog"
+            current_catalog = self._sparkbuilder._options.get("spark.sql.catalog.spark_catalog")
+            if current_catalog and current_catalog != hudi_catalog:
+                raise ValueError(
+                    f"spark_catalog is already configured as {current_catalog}. Hudi also needs spark_catalog, "
+                    "so it cannot be combined with withDelta() or with withIceberg() without catalog names. "
+                    "Iceberg can be combined with Hudi by giving withIceberg() catalog names."
+                )
+            self._sparkbuilder = self._sparkbuilder \
+                .config("spark.sql.catalog.spark_catalog", hudi_catalog)
+            self._append_config("spark.jars.packages", "org.apache.hudi:hudi-spark4.0-bundle_2.13:1.2.1")
+            self._append_config("spark.sql.extensions", "org.apache.spark.sql.hudi.HoodieSparkSessionExtension")
+            # Rumble only installs its own Kryo registrator when spark.serializer is unset,
+            # so both registrators are listed here.
+            self._sparkbuilder = self._sparkbuilder \
+                .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+            self._append_config("spark.kryo.registrator", "org.rumbledb.spark.RumbleKryoRegistrator")
+            self._append_config("spark.kryo.registrator", "org.apache.spark.HoodieSparkKryoRegistrar")
+            self._sparkbuilder = self._sparkbuilder \
+                .config("spark.sql.warehouse.dir", "./hudi-warehouse") \
+                .config("hoodie.schema.on.read.enable", "true") \
+                .config("hoodie.datasource.write.schema.allow.auto.evolution.column.drop", "true") \
+                .config("spark.hadoop.hive.metastore.disallow.incompatible.col.type.changes", "false")
             return self;
 
         def withMongo(self):
